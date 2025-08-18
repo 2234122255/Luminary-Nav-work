@@ -171,6 +171,7 @@
 </template>
 
 <script>
+<<<<<<< HEAD
 import { onMounted, ref, watch } from 'vue'
 import * as d3 from 'd3'
 
@@ -1132,3 +1133,17 @@ export default {
   }
 }
 </style>
+=======
+import { onMounted } from 'vue'
+import * as d3 from 'd3'
+
+export default {
+  setup() {
+    onMounted(() => {
+      // 这里将添加D3.js网络图实现
+      console.log('Network view mounted')
+    })
+  }
+}
+</script>
+>>>>>>> a0fb820d53d87b0009869acd394b0a9bcbce725b

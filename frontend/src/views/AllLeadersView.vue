@@ -65,9 +65,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 
-
 export default {
-
   setup() {
     const leaders = ref([])
     const loading = ref(true)
