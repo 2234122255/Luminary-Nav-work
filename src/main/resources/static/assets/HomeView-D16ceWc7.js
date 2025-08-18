@@ -1,0 +1,1 @@
+import{_ as o,c as s,a as t,o as a}from"./main-Bs-sH0pV.js";const n={name:"HomeView"},r={class:"home"};function c(_,e,i,m,p,d){return a(),s("div",r,e[0]||(e[0]=[t("h1",null,"欢迎来到合著网络人才分析平台",-1)]))}const f=o(n,[["render",c]]);export{f as default};
