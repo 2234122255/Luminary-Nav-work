@@ -53,20 +53,22 @@
           
           <!-- 领域设置 -->
           <div class="filter-group">
-            <div class="select-wrapper">
-              <select class="filter-select" v-model="selectedField">
-                <option value="">全部领域</option>
-                <option value="computer-science">计算机科学</option>
-                <option value="physics">物理学</option>
-                <option value="chemistry">化学</option>
-                <option value="biology">生物学</option>
-                <option value="mathematics">数学</option>
-                <option value="engineering">工程学</option>
-                <option value="medicine">医学</option>
-                <option value="economics">经济学</option>
-              </select>
-            </div>
-          </div>
+  <input 
+    type="text" 
+    v-model="searchName" 
+    placeholder="搜索学者姓名..." 
+    class="filter-input"
+  />
+</div>
+
+<div class="filter-group">
+  <input 
+    type="text" 
+    v-model="searchOrg" 
+    placeholder="按机构筛选..." 
+    class="filter-input"
+  />
+</div>
           
           <!-- 地域范围设置 -->
           <div class="filter-group">
@@ -113,6 +115,8 @@
                 v-for="(author, index) in leaders"
                 :key="author.id"
                 class="ranking-item"
+                @click="$emit('show-detail', author)" 
+                style="cursor: pointer;"
                 :class="{ 'top-three': index < 3 }"
             >
               <div class="rank-badge">{{ index + 1 }}</div>
@@ -176,42 +180,49 @@
           </div>
         </div>
 
-        <!-- 潜力新星榜单 -->
-        <div class="ranking-card">
-          <h2 class="card-title">
-            潜力新星榜单
-            <router-link to="/rankings/rising-stars" class="view-all">查看全部</router-link>
-          </h2>
+       <div class="ranking-card">
+  <h2 class="card-title">
+    潜力新星榜单
+    <router-link to="/rankings/rising-stars" class="view-all">查看全部</router-link>
+  </h2>
 
-          <div class="ranking-list placeholder-list">
-            <div v-for="i in 10" :key="`star-${i}`" class="ranking-item placeholder-item">
-              <div class="rank-badge">{{ i }}</div>
-              <div class="author-info">
-                <div class="name">——</div>
-                <div class="org">——</div>
-              </div>
-              <div class="stats">
-                <div class="papers">
-                  <span class="label">论文数:</span>
-                  <i class="fa fa-file-text-o"></i>
-                  <span class="value">——</span>
-                </div>
-                <div class="score">
-                  <span class="label">总分:</span>
-                  <i class="fa fa-trophy"></i>
-                  <span class="value">——</span>
-                </div>
-              </div>
-            </div>
-          </div>
+  <div v-if="risingStars.length > 0" class="ranking-list">
+    <div
+      v-for="(author, index) in risingStars"
+      :key="author.id"
+      class="ranking-item"
+      @click="$emit('show-detail', author)" 
+      style="cursor: pointer;"
+      :class="{ 'top-three': index < 3 }"
+    >
+      <div class="rank-badge">{{ index + 1 }}</div>
+      <div class="author-info">
+        <div class="name" :title="author.name">{{ author.name }}</div>
+        <div class="org" :title="processOrgName(author.org)">
+          {{ truncateOrg(processOrgName(author.org)) }}
         </div>
+      </div>
+      <div class="stats">
+        <div class="papers">
+          <span class="label">论文数:</span>
+          <span class="value">{{ author.paperCount || 0 }}</span>
+        </div>
+        <div class="score">
+          <span class="label">总分:</span>
+          <span class="value">{{ formatScore(author.totalScore) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-else class="loading">加载中...</div>
+</div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue' // 必须加上 watch
 import axios from 'axios'
 
 export default {
@@ -220,7 +231,10 @@ export default {
     const leaders = ref([])
     const loading = ref(true)
     const error = ref(null)
-
+    const risingStars = ref([])
+// 在 setup() 内部添加
+const searchName = ref('') // 绑定姓名搜索
+const searchOrg = ref('')  // 绑定机构搜索
     // 机构排名数据
     const institutions = ref([])
     const institutionsLoading = ref(true)
@@ -265,58 +279,77 @@ export default {
       return org.length > maxLength ? org.slice(0, maxLength) + '...' : org
     }
 
-    // 获取领军人才数据
-    const fetchLeaders = async () => {
-      try {
-        const response = await axios.get('/api/rankings/top10')
-        leaders.value = response.data.content || []
-      } catch (err) {
-        console.error('获取领军人才数据失败:', err)
-        error.value = '数据加载失败'
-      } finally {
-        loading.value = false
-      }
-    }
+  // 修改 src/views/RankingsView.vue 的 fetchLeaders 方法
+const fetchLeaders = async () => {
+  try {
+    // 访问你刚写好的 Java 后端接口
+    const response = await axios.get('http://localhost:8080/api/rankings/top10')
+    leaders.value = response.data // 直接赋值，后端已经帮你排好序了
+    filteredCount.value = response.data.length
+  } catch (err) {
+   error.value = '搜索数据失败'
+  } finally {
+    loading.value = false
+  }
+}
+// 监听搜索词的变化
+watch([searchName, searchOrg], () => {
+  // 清除之前的定时器
+  if (timer) clearTimeout(timer)
+  
+  // 设置 500ms 的延迟触发
+  timer = setTimeout(() => {
+    fetchLeaders()
+  }, 500)
+})
+    // 修改获取机构排名的方法
+const fetchInstitutions = async () => {
+  institutionsLoading.value = true
+  try {
+    // 对应后端新加的 /institutions/top10
+    const response = await axios.get('http://localhost:8080/api/rankings/institutions/top10')
+    institutions.value = response.data.content || []
+  } catch (err) {
+    institutionsError.value = '机构数据加载失败'
+  } finally {
+    institutionsLoading.value = false
+  }
+}
 
-    // 获取机构排名数据
-    const fetchInstitutions = async () => {
-      try {
-        const response = await axios.get('/api/rankings/institutions/top10')
-        institutions.value = response.data.content || []
-      } catch (err) {
-        console.error('获取机构数据失败:', err)
-        institutionsError.value = '数据加载失败'
-      } finally {
-        institutionsLoading.value = false
-      }
-    }
+// 新增获取潜力新星的方法
 
-    // 应用筛选方法
-    const applyFilters = () => {
-      console.log('应用筛选:', {
-        startYear: startYear.value,
-        endYear: endYear.value,
-        field: selectedField.value,
-        region: selectedRegion.value
-      })
-      
-      // 模拟筛选后的数量变化
-      const baseCount = 213
-      let filteredCountValue = baseCount
-      
-      // 根据年份范围筛选
-      const yearRange = endYear.value - startYear.value
-      if (yearRange < 5) {
-        filteredCountValue = Math.floor(filteredCountValue * 0.6)
-      } else if (yearRange < 10) {
-        filteredCountValue = Math.floor(filteredCountValue * 0.8)
+const fetchRisingStars = async () => {
+  try {
+    const response = await axios.get('http://localhost:8080/api/rankings/rising-stars')
+    risingStars.value = response.data
+  } catch (err) {
+    console.error('潜力新星加载失败')
+  }
+}
+
+    // 修改应用筛选方法，对接后端 API
+const applyFilters = async () => {
+  loading.value = true
+  try {
+    const response = await axios.get('http://localhost:8080/api/rankings/search', {
+      params: {
+        name: searchName.value,
+        org: searchOrg.value,
+        page: 1,
+        size: 10 // 看板通常只展示前10名
       }
-      
-      if (selectedField.value) filteredCountValue = Math.floor(filteredCountValue * 0.8)
-      if (selectedRegion.value) filteredCountValue = Math.floor(filteredCountValue * 0.7)
-      
-      filteredCount.value = filteredCountValue
-    }
+    })
+    leaders.value = response.data
+    // 假设后端返回的数据量就是当前的 filteredCount
+    // 如果需要精确的总数，后端接口应返回一个包含 total 的对象
+    filteredCount.value = response.data.length 
+  } catch (err) {
+    console.error('筛选失败:', err)
+    error.value = '筛选数据失败，请检查后端服务'
+  } finally {
+    loading.value = false
+  }
+}
     
     // 开始拖拽滑块
     const startDragging = (type) => {
@@ -450,7 +483,7 @@ export default {
     onMounted(() => {
       // 初始化年份百分比
       updateYearPercentages()
-      
+      fetchRisingStars()
       fetchLeaders()
       fetchInstitutions()
     })
@@ -476,7 +509,12 @@ export default {
       startDragging,
       handleKeyDown,
       startTrackDragging,
-      updateYearPercentages
+      updateYearPercentages,
+      searchName,
+        searchOrg,
+        leaders,
+        loading,
+        risingStars
     }
   }
 }
@@ -529,9 +567,9 @@ export default {
 
 /* 主要内容区域 */
 .main-content {
-  max-width: 1120px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0;
+  padding: 0 40px;
   margin-top: 32px;
 }
 
@@ -684,8 +722,27 @@ export default {
 .filter-btn:hover {
   color: #ffffff;
   transform: translateY(-1px);
+}/* 在 RankingsView.vue 的 <style scoped> 中添加 */
+.filter-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  padding: 8px 16px;
+  outline: none;
+  transition: all 0.3s ease;
+  width: 180px;
 }
 
+.filter-input:focus {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #8b5cf6; /* 紫色边框，呼应主题色 */
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+}
+
+.filter-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
 /* 数据点总数显示 */
 .data-count {
   display: flex;
@@ -714,6 +771,7 @@ export default {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 32px;
+  width: 100%;
 }
 
 .ranking-card {

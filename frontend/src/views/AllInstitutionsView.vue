@@ -1,60 +1,92 @@
 <template>
-  <div class="full-ranking">
-    <h1 class="title">机构排名榜单</h1>
+  <div class="full-ranking-container">
+    <div class="glass-overlay"></div>
+    
+    <div class="content-wrapper">
+      <header class="page-header">
+        <h1 class="title">全球机构<span>学术排名榜单</span></h1>
+        <router-link to="/rankings" class="back-link">
+          <i class="fa fa-arrow-left"></i> 返回概览
+        </router-link>
+      </header>
 
-    <div class="controls">
-      <div class="search-box">
-        <input
-            type="text"
-            v-model="searchQuery"
-            placeholder="搜索机构..."
-            @keyup.enter="searchInstitutions"
-        >
-        <button @click="searchInstitutions">搜索</button>
-        <button @click="clearSearch" v-if="searchQuery">清除</button>
-      </div>
-      <div class="pagination-info">
-        {{ searchQuery ? '搜索结果' : '第' }} {{ page + 1 }} 页 / 共 {{ totalPages }} 页
-      </div>
-    </div>
-
-    <div v-if="loading" class="loading">加载中...</div>
-    <div v-else-if="apiError" class="error-message">错误: {{ apiError }}</div>
-    <div v-else-if="institutions.length === 0" class="empty-message">
-      {{ searchQuery ? '未找到匹配的机构' : '暂无数据' }}
-    </div>
-    <div v-else>
-      <div class="ranking-header">
-        <div class="header-rank">排名</div>
-        <div class="header-name">机构名称</div>
-        <div class="header-score">平均分</div>
-        <div class="header-papers">论文总数</div>
-
-      </div>
-
-      <div class="ranking-list">
-        <div
-            v-for="(institution, index) in institutions"
-            :key="institution.id || institution.name"
-            class="ranking-item"
-            :class="{ 'highlight': isSearchResult && institution.name.toLowerCase().includes(searchQuery.toLowerCase()) }"
-        >
-          <div class="rank">{{ (page * size) + index + 1 }}</div>
-          <div class="name" v-html="highlightMatch(processOrgName(institution.name))"></div>
-          <div class="score">{{ formatScore(institution.averageScore) }}</div>
-          <div class="papers">{{ institution.paperCount || 0 }}</div>
-
+      <div class="controls-card">
+        <div class="search-engine">
+          <div class="input-wrapper">
+            <i class="fa fa-university"></i>
+            <input
+              type="text"
+              v-model="searchQuery"
+              placeholder="搜索机构名称（如：Xi'an Jiaotong University）..."
+              @keyup.enter="searchInstitutions"
+            >
+          </div>
+          <button class="btn-glow" @click="searchInstitutions">分析数据</button>
+          <button class="btn-outline" @click="clearSearch" v-if="searchQuery">重置</button>
+        </div>
+        
+        <div class="page-indicator">
+          <span class="dot pulse"></span>
+          Page {{ page + 1 }} / {{ totalPages }}
         </div>
       </div>
 
-      <div class="pagination">
-        <button @click="prevPage" :disabled="page === 0">上一页</button>
-        <span>
-          显示 {{ (page * size) + 1 }}-{{ Math.min((page + 1) * size, totalElements) }} 条，
-          共 {{ totalElements }} 条
-        </span>
-        <button @click="nextPage" :disabled="page >= totalPages - 1">下一页</button>
+      <div class="main-table-container">
+        <div class="ranking-header">
+          <div class="col-rank">RANK</div>
+          <div class="col-name">机构名称</div>
+          <div class="col-score">平均学术分</div>
+          <div class="col-papers">论文总数</div>
+          <div class="col-authors">学者规模</div>
+        </div>
+
+        <div v-if="loading" class="state-info">
+          <div class="loader"></div>
+          <p>正在聚合全球机构学术大数据...</p>
+        </div>
+        
+        <div v-else-if="institutions.length === 0" class="state-info empty">
+          <i class="fa fa-folder-open-o"></i>
+          <p>未发现匹配的科研机构</p>
+        </div>
+
+        <div v-else class="ranking-list">
+          <div
+            v-for="(inst, index) in institutions"
+            :key="inst.name"
+            class="ranking-row"
+            :style="{ '--delay': index }"
+          >
+            <div class="col-rank">
+              <span class="rank-num" :class="{ 'top-rank': page === 0 && index < 3 }">
+                {{ (page * size) + index + 1 }}
+              </span>
+            </div>
+            <div class="col-name" v-html="highlightMatch(processOrgName(inst.name))"></div>
+            <div class="col-score">
+              <span class="score-tag">{{ formatScore(inst.averageScore) }}</span>
+            </div>
+            <div class="col-papers">
+              <span class="data-pill"><i class="fa fa-file-code-o"></i> {{ inst.paperCount || 0 }}</span>
+            </div>
+            <div class="col-authors">
+              <i class="fa fa-users"></i> {{ inst.authorCount || 'N/A' }}
+            </div>
+          </div>
+        </div>
       </div>
+
+      <footer class="pagination-footer">
+        <button @click="prevPage" :disabled="page === 0" class="nav-btn">
+          <i class="fa fa-chevron-left"></i> 上一页
+        </button>
+        <div class="stats-text">
+          Showing <b>{{ (page * size) + 1 }}-{{ Math.min((page + 1) * size, totalElements) }}</b> of {{ totalElements }} Institutions
+        </div>
+        <button @click="nextPage" :disabled="page >= totalPages - 1" class="nav-btn">
+          下一页 <i class="fa fa-chevron-right"></i>
+        </button>
+      </footer>
     </div>
   </div>
 </template>
@@ -200,170 +232,175 @@ export default {
 </script>
 
 <style scoped>
-/* 保持与领军人才榜单相同的样式 */
-.full-ranking {
-  max-width: 1200px;
+/* 保持与领军人才一致的背景与基础布局 */
+.full-ranking-container {
+  min-height: 100vh;
+  background: #0f0f23;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(31, 27, 75, 0.5) 0, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.1) 0, transparent 50%);
+  color: #fff;
+  padding: 40px 20px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.content-wrapper {
+  max-width: 1300px;
   margin: 0 auto;
-  padding: 20px;
-  font-family: 'Helvetica Neue', Arial, sans-serif;
+  position: relative;
+  z-index: 1;
 }
 
-.title {
-  text-align: center;
-  margin-bottom: 30px;
-  color: #2c3e50;
-  font-size: 28px;
+/* 标题与 Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
 }
 
-.controls {
+.title { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+.title span {
+  display: block; font-size: 16px; color: #8b5cf6;
+  text-transform: uppercase; letter-spacing: 4px; margin-top: 5px;
+}
+
+.back-link {
+  color: rgba(255,255,255,0.6); text-decoration: none; font-size: 14px;
+  transition: 0.3s; border-bottom: 1px solid transparent;
+}
+.back-link:hover { color: #fff; border-color: #8b5cf6; }
+
+/* 搜索控制区 - 玻璃拟态 */
+.controls-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 24px 32px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 10px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
-.search-box {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+.search-engine { display: flex; gap: 15px; }
+
+.input-wrapper { position: relative; display: flex; align-items: center; }
+.input-wrapper i { position: absolute; left: 15px; color: #8b5cf6; }
+.input-wrapper input {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 12px 15px 12px 45px;
+  color: #fff;
+  width: 380px;
+  transition: 0.3s;
+}
+.input-wrapper input:focus {
+  outline: none; border-color: #8b5cf6;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
 }
 
-.search-box input {
-  padding: 10px 15px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: 300px;
-  font-size: 14px;
+.btn-glow {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: white; border: none; padding: 0 30px;
+  border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s;
+}
+.btn-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
 }
 
-.search-box button {
-  padding: 10px 20px;
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.search-box button:hover {
-  background: #2980b9;
+/* 表格系统 */
+.main-table-container {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
 }
 
 .ranking-header {
   display: grid;
-  grid-template-columns: 60px 2fr 100px 100px 100px;
-  padding: 12px 15px;
-  background: #34495e;
-  color: white;
-  font-weight: bold;
-  border-radius: 4px 4px 0 0;
-  align-items: center;
+  grid-template-columns: 80px 2fr 150px 150px 150px;
+  padding: 20px 30px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.4);
+  text-transform: uppercase; letter-spacing: 2px;
 }
 
-.ranking-list {
-  border: 1px solid #eee;
-  border-top: none;
-  border-radius: 0 0 4px 4px;
-}
-
-.ranking-item {
+.ranking-row {
   display: grid;
-  grid-template-columns: 60px 2fr 100px 100px 100px;
+  grid-template-columns: 80px 2fr 150px 150px 150px;
+  padding: 30px 30px; /* 拉长单行高度 */
   align-items: center;
-  padding: 12px 15px;
-  border-bottom: 1px solid #eee;
-  transition: background 0.2s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  animation: slideUp 0.6s ease forwards;
+  animation-delay: calc(var(--delay) * 0.05s);
+  opacity: 0;
 }
 
-.ranking-item:hover {
-  background-color: #f8f9fa;
+.ranking-row:hover {
+  background: rgba(139, 92, 246, 0.08);
+  transform: scale(1.01) translateX(5px);
 }
 
-.ranking-item.highlight {
-  background-color: #f0f8ff;
+/* 装饰细节 */
+.rank-num {
+  width: 36px; height: 36px; display: flex; justify-content: center;
+  align-items: center; border-radius: 10px; background: rgba(255,255,255,0.05);
+  font-weight: 800; font-family: 'JetBrains Mono', monospace;
 }
 
-.ranking-item:last-child {
-  border-bottom: none;
+.top-rank {
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  color: #fff; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
 
-.rank {
-  text-align: center;
-  font-weight: bold;
-  color: #7f8c8d;
+.col-name { font-size: 18px; font-weight: 600; color: #fff; }
+
+.score-tag {
+  color: #fbbf24; font-weight: 800; font-size: 20px;
+  text-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
 }
 
-.name {
-  font-weight: 500;
-  color: #2c3e50;
-  padding: 0 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.data-pill {
+  background: rgba(255,255,255,0.05); padding: 6px 12px;
+  border-radius: 20px; font-size: 14px; border: 1px solid rgba(255,255,255,0.1);
 }
 
-.score {
-  text-align: center;
-  font-weight: bold;
-  color: #e74c3c;
+/* 分页控制区 */
+.pagination-footer {
+  margin-top: 40px; display: flex; justify-content: space-between; align-items: center;
 }
 
-.papers, .authors {
-  text-align: center;
-  color: #555;
+.nav-btn {
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white; padding: 12px 25px; border-radius: 14px; cursor: pointer; transition: 0.3s;
+}
+.nav-btn:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.2); border-color: #8b5cf6;
 }
 
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-  margin-top: 30px;
-  flex-wrap: wrap;
+/* 动画 */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.pagination button {
-  padding: 8px 16px;
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.3s;
+.loader {
+  width: 40px; height: 40px; border: 3px solid rgba(139, 92, 246, 0.1);
+  border-top-color: #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
 }
 
-.pagination button:hover:not(:disabled) {
-  background: #2980b9;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.pagination button:disabled {
-  background: #bdc3c7;
-  cursor: not-allowed;
-}
-
-.loading, .error-message, .empty-message {
-  text-align: center;
-  padding: 50px;
-  font-size: 18px;
-}
-
-.loading {
-  color: #7f8c8d;
-}
-
-.error-message {
-  color: #e74c3c;
-}
-
-.empty-message {
-  color: #95a5a6;
-}
-
-.match {
-  background-color: #fff3cd;
-  font-weight: bold;
+:deep(.match) {
+  color: #8b5cf6; background: rgba(139, 92, 246, 0.1);
+  padding: 2px 4px; border-radius: 4px; font-weight: bold;
 }
 </style>

@@ -7,52 +7,37 @@
           <h1 class="hero-title">洞察学术合著网络</h1>
           <p class="hero-subtitle">发现卓越科研力量，构建学术合作桥梁</p>
         </div>
-        
+
         <!-- 右侧筛选设置栏 -->
         <div class="hero-filter-bar">
-                  <!-- 起止年份设置 -->
-        <div class="filter-group">
-          <div class="year-range">
-            <div class="year-slider">
-              <!-- 时间轴标签 -->
-              <div class="year-labels">
-                <span class="year-label">{{ startYear }}</span>
-                <span class="year-label">{{ new Date().getFullYear() }}</span>
-              </div>
-              
-              <div class="year-slider-track" @mousedown="startTrackDragging">
-                <div class="year-slider-fill" :style="{ left: startYearPercent + '%', right: (100 - endYearPercent) + '%' }"></div>
-                <div 
-                  class="year-slider-thumb start" 
-                  :style="{ left: startYearPercent + '%' }"
-                  @mousedown.stop="startDragging('start')"
-                  @keydown="handleKeyDown('start', $event)"
-                  tabindex="0"
-                  role="slider"
-                  :aria-valuenow="startYear"
-                  :aria-valuemin="minYear"
-                  :aria-valuemax="endYear - 1"
-                  aria-label="起始年份"
-                ></div>
-                <div 
-                  class="year-slider-thumb end" 
-                  :style="{ left: endYearPercent + '%' }"
-                  @mousedown.stop="startDragging('end')"
-                  @keydown="handleKeyDown('end', $event)"
-                  tabindex="0"
-                  role="slider"
-                  :aria-valuenow="endYear"
-                  :aria-valuemin="startYear + 1"
-                  :aria-valuemax="maxYear"
-                  aria-label="结束年份"
-                ></div>
-              </div>
-              
+          <!-- 起止年份设置 -->
+          <div class="filter-group">
+            <div class="year-range">
+              <div class="year-slider">
+                <!-- 时间轴标签 -->
+                <div class="year-labels">
+                  <span class="year-label">{{ startYear }}</span>
+                  <span class="year-label">{{ new Date().getFullYear() }}</span>
+                </div>
 
+                <div class="year-slider-track" @mousedown="startTrackDragging">
+                  <div class="year-slider-fill"
+                    :style="{ left: startYearPercent + '%', right: (100 - endYearPercent) + '%' }"></div>
+                  <div class="year-slider-thumb start" :style="{ left: startYearPercent + '%' }"
+                    @mousedown.stop="startDragging('start')" @keydown="handleKeyDown('start', $event)" tabindex="0"
+                    role="slider" :aria-valuenow="startYear" :aria-valuemin="minYear" :aria-valuemax="endYear - 1"
+                    aria-label="起始年份"></div>
+                  <div class="year-slider-thumb end" :style="{ left: endYearPercent + '%' }"
+                    @mousedown.stop="startDragging('end')" @keydown="handleKeyDown('end', $event)" tabindex="0"
+                    role="slider" :aria-valuenow="endYear" :aria-valuemin="startYear + 1" :aria-valuemax="maxYear"
+                    aria-label="结束年份"></div>
+                </div>
+
+
+              </div>
             </div>
           </div>
-        </div>
-          
+
           <!-- 领域设置 -->
           <div class="filter-group">
             <div class="select-wrapper">
@@ -69,7 +54,7 @@
               </select>
             </div>
           </div>
-          
+
           <!-- 地域范围设置 -->
           <div class="filter-group">
             <div class="select-wrapper">
@@ -83,12 +68,12 @@
               </select>
             </div>
           </div>
-          
+
           <!-- 数据点总数显示 -->
           <div class="data-count">
             <span class="count-number">{{ filteredConnectionCount }}</span>
           </div>
-          
+
           <!-- 筛选按钮 -->
           <button class="filter-btn" @click="applyFilters">
             筛选
@@ -109,50 +94,52 @@
         <h3 class="card-title">作者简介</h3>
         <div class="profile-content">
           <div class="profile-picture">
-            <img :src="selectedAuthor.avatar || `https://via.placeholder.com/80x80/4f46e5/ffffff?text=${selectedAuthor.name.charAt(0)}`" :alt="selectedAuthor.name" class="avatar">
+            <img
+              :src="selectedAuthor.avatar || `https://via.placeholder.com/80x80/4f46e5/ffffff?text=${selectedAuthor.name.charAt(0)}`"
+              :alt="selectedAuthor.name" class="avatar">
           </div>
-                      <div class="profile-info">
-              <h4 class="author-name">{{ selectedAuthor.name }}</h4>
-              <div class="info-item">
-                <span class="label">机构:</span>
-                <span class="value">{{ selectedAuthor.institution }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">排名:</span>
-                <span class="value">{{ selectedAuthor.ranking }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">评分:</span>
-                <span class="value">{{ selectedAuthor.score }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">年龄:</span>
-                <span class="value">{{ selectedAuthor.age }}岁</span>
-              </div>
-              <div class="info-item">
-                <span class="label">总文章数:</span>
-                <span class="value">{{ selectedAuthor.paperCount }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">总引用量:</span>
-                <span class="value">{{ selectedAuthor.citationCount }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">合作数量:</span>
-                <span class="value">{{ selectedAuthor.collaborationCount }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">合作深度:</span>
-                <span class="value">{{ selectedAuthor.collaborationDepth }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">合作广度:</span>
-                <span class="value">{{ selectedAuthor.collaborationBreadth }}</span>
-              </div>
+          <div class="profile-info">
+            <h4 class="author-name">{{ selectedAuthor.name }}</h4>
+            <div class="info-item">
+              <span class="label">机构:</span>
+              <span class="value">{{ selectedAuthor.institution }}</span>
             </div>
+            <div class="info-item">
+              <span class="label">排名:</span>
+              <span class="value">{{ selectedAuthor.ranking }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">评分:</span>
+              <span class="value">{{ selectedAuthor.score }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">年龄:</span>
+              <span class="value">{{ selectedAuthor.age }}岁</span>
+            </div>
+            <div class="info-item">
+              <span class="label">总文章数:</span>
+              <span class="value">{{ selectedAuthor.paperCount }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">总引用量:</span>
+              <span class="value">{{ selectedAuthor.citationCount }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">合作数量:</span>
+              <span class="value">{{ selectedAuthor.collaborationCount }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">合作深度:</span>
+              <span class="value">{{ selectedAuthor.collaborationDepth }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">合作广度:</span>
+              <span class="value">{{ selectedAuthor.collaborationBreadth }}</span>
+            </div>
+          </div>
         </div>
       </div>
-      
+
       <!-- 默认显示提示 -->
       <div class="author-profile-card" v-else>
         <h3 class="card-title">作者简介</h3>
@@ -171,7 +158,7 @@
 </template>
 
 <script>
-<<<<<<< HEAD
+
 import { onMounted, ref, watch } from 'vue'
 import * as d3 from 'd3'
 
@@ -181,26 +168,26 @@ export default {
     const selectedAuthor = ref(null)
     const hoveredNode = ref(null)
     const tooltip = ref({ visible: false, x: 0, y: 0, text: '' })
-    
+
     // 筛选相关数据
     const startYear = ref(2000)
     const endYear = ref(new Date().getFullYear())
     const selectedField = ref('')
     const selectedRegion = ref('')
     const filteredConnectionCount = ref(213)
-    
+
     // 滑块拖拽相关
     const isDragging = ref(false)
     const dragType = ref('')
-    
+
     // 年份范围
     const minYear = 2000
     const maxYear = new Date().getFullYear()
-    
+
     // 计算年份百分比
     const startYearPercent = ref(0) // 2000年对应0%
     const endYearPercent = ref(100) // 当前年份对应100%
-    
+
     // 动态更新当前年份
     const updateCurrentYear = () => {
       const currentYear = new Date().getFullYear()
@@ -209,7 +196,7 @@ export default {
         endYearPercent.value = 100
       }
     }
-    
+
     // 初始化年份百分比
     const initYearPercentages = () => {
       const yearRange = maxYear - minYear
@@ -220,22 +207,22 @@ export default {
     onMounted(() => {
       // 初始化年份百分比
       initYearPercentages()
-      
+
       renderNetworkGraph()
-      
+
       // 监听窗口大小变化，重新渲染网络图
       const resizeObserver = new ResizeObserver(() => {
         renderNetworkGraph()
       })
-      
+
       const container = document.getElementById('network-graph')
       if (container) {
         resizeObserver.observe(container)
       }
-      
+
       // 设置定时器，每天更新一次当前年份
       const yearUpdateTimer = setInterval(updateCurrentYear, 24 * 60 * 60 * 1000)
-      
+
       // 清理函数
       return () => {
         resizeObserver.disconnect()
@@ -326,12 +313,12 @@ export default {
 
       // 添加交互
       nodeGroups
-        .on('mouseover', function(event, d) {
+        .on('mouseover', function (event, d) {
           // 高亮当前节点
           d3.select(this).select('circle')
             .attr('r', d.size * 1.5)
             .style('filter', 'drop-shadow(0 0 12px rgba(139, 92, 246, 0.8))')
-          
+
           // 高亮相关连接线 - 增强发光效果
           linkElements
             .filter(link => link.source.id === d.id || link.target.id === d.id)
@@ -343,7 +330,7 @@ export default {
             .duration(200)
             .style('stroke', '#a855f7')
             .style('filter', 'drop-shadow(0 0 20px rgba(139, 92, 246, 1))')
-          
+
           // 显示工具提示
           tooltip.value = {
             visible: true,
@@ -352,17 +339,17 @@ export default {
             text: `${d.name}\n排名: ${d.ranking}\n机构: ${d.institution}\n评分: ${d.score}`
           }
         })
-        .on('mousemove', function(event, d) {
+        .on('mousemove', function (event, d) {
           // 更新工具提示位置
           tooltip.value.x = event.pageX + 10
           tooltip.value.y = event.pageY - 10
         })
-        .on('mouseout', function(event, d) {
+        .on('mouseout', function (event, d) {
           // 恢复节点样式
           d3.select(this).select('circle')
             .attr('r', d.size)
             .style('filter', 'drop-shadow(0 0 8px rgba(139, 92, 246, 0.4))')
-          
+
           // 恢复连接线样式 - 平滑过渡
           linkElements
             .transition()
@@ -371,11 +358,11 @@ export default {
             .attr('stroke-width', 1)
             .style('filter', 'none')
             .style('opacity', 0.6)
-          
+
           // 隐藏工具提示
           tooltip.value.visible = false
         })
-        .on('click', function(event, d) {
+        .on('click', function (event, d) {
           // 点击选择作者
           selectedAuthor.value = d
         })
@@ -420,11 +407,11 @@ export default {
         field: selectedField.value,
         region: selectedRegion.value
       })
-      
+
       // 模拟筛选后的连接数量变化
       const baseCount = 213
       let filteredCount = baseCount
-      
+
       // 根据年份范围筛选
       const yearRange = endYear.value - startYear.value
       if (yearRange < 5) {
@@ -432,43 +419,43 @@ export default {
       } else if (yearRange < 10) {
         filteredCount = Math.floor(filteredCount * 0.8) // 年份范围中等
       }
-      
+
       if (selectedField.value) filteredCount = Math.floor(filteredCount * 0.8)
       if (selectedRegion.value) filteredCount = Math.floor(filteredCount * 0.7)
-      
+
       filteredConnectionCount.value = filteredCount
-      
+
       // 重新渲染网络图（这里可以添加实际的筛选逻辑）
       renderNetworkGraph()
     }
-    
+
     // 开始拖拽滑块
     const startDragging = (type) => {
       isDragging.value = true
       dragType.value = type
-      
+
       const handleMouseMove = (e) => {
         if (!isDragging.value) return
-        
+
         const slider = e.currentTarget.closest('.year-slider')
         if (!slider) return
-        
+
         const rect = slider.getBoundingClientRect()
         const x = e.clientX - rect.left
         const percent = Math.max(0, Math.min(100, (x / rect.width) * 100))
-        
+
         if (dragType.value === 'start') {
           // 允许起始滑块移动到结束滑块位置，但年份值保持最小间隔
           const yearRange = maxYear - minYear
           const targetYear = minYear + Math.round((percent / 100) * yearRange)
           const newStartYear = Math.max(minYear, targetYear)
-          
+
           // 如果目标年份大于等于结束年份，则调整结束年份
           if (newStartYear >= endYear.value) {
             endYear.value = Math.min(maxYear, newStartYear + 1)
             endYearPercent.value = ((endYear.value - minYear) / yearRange) * 100
           }
-          
+
           startYear.value = newStartYear
           startYearPercent.value = ((startYear.value - minYear) / yearRange) * 100
         } else if (dragType.value === 'end') {
@@ -476,40 +463,40 @@ export default {
           const yearRange = maxYear - minYear
           const targetYear = minYear + Math.round((percent / 100) * yearRange)
           const newEndYear = Math.min(maxYear, targetYear)
-          
+
           // 如果目标年份小于等于起始年份，则调整起始年份
           if (newEndYear <= startYear.value) {
             startYear.value = Math.max(minYear, newEndYear - 1)
             startYearPercent.value = ((startYear.value - minYear) / yearRange) * 100
           }
-          
+
           endYear.value = newEndYear
           endYearPercent.value = ((endYear.value - minYear) / yearRange) * 100
         }
       }
-      
+
       const handleMouseUp = () => {
         isDragging.value = false
         dragType.value = ''
         document.removeEventListener('mousemove', handleMouseMove)
         document.removeEventListener('mouseup', handleMouseUp)
       }
-      
+
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
     }
-    
+
     // 更新年份百分比
     const updateYearPercentages = () => {
       const yearRange = maxYear - minYear
       startYearPercent.value = ((startYear.value - minYear) / yearRange) * 100
       endYearPercent.value = ((endYear.value - minYear) / yearRange) * 100
     }
-    
+
     // 处理键盘事件，以1年为单位调整
     const handleKeyDown = (type, event) => {
       event.preventDefault()
-      
+
       if (type === 'start') {
         if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
           // 减少起始年份
@@ -544,28 +531,28 @@ export default {
         }
       }
     }
-    
+
     // 轨道拖拽，移动整个年份范围
     const startTrackDragging = (event) => {
       const slider = event.currentTarget
       const rect = slider.getBoundingClientRect()
       const x = event.clientX - rect.left
       const percent = Math.max(0, Math.min(100, (x / rect.width) * 100))
-      
+
       const yearRange = maxYear - minYear
       const targetYear = minYear + Math.round((percent / 100) * yearRange)
       const currentRange = endYear.value - startYear.value
-      
+
       // 计算新的起始和结束年份，保持当前范围
       let newStartYear = Math.max(minYear, targetYear - Math.floor(currentRange / 2))
       let newEndYear = newStartYear + currentRange
-      
+
       // 确保不超出边界
       if (newEndYear > maxYear) {
         newEndYear = maxYear
         newStartYear = Math.max(minYear, newEndYear - currentRange)
       }
-      
+
       startYear.value = newStartYear
       endYear.value = newEndYear
       updateYearPercentages()
@@ -697,7 +684,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     linear-gradient(90deg, transparent 0%, rgba(139, 92, 246, 0.1) 25%, transparent 50%, rgba(139, 92, 246, 0.1) 75%, transparent 100%),
     linear-gradient(0deg, transparent 0%, rgba(139, 92, 246, 0.05) 50%, transparent 100%);
   border-radius: 12px;
@@ -1039,7 +1026,7 @@ export default {
     grid-template-columns: 1fr;
     gap: 24px;
   }
-  
+
   .author-profile-card {
     order: -1;
   }
@@ -1051,19 +1038,19 @@ export default {
     gap: 24px;
     text-align: center;
   }
-  
+
   .hero-main {
     text-align: center;
   }
-  
+
   .hero-title {
     font-size: 28px;
   }
-  
+
   .hero-subtitle {
     font-size: 16px;
   }
-  
+
   .hero-filter-bar {
     min-width: 100%;
     flex-direction: column;
@@ -1071,40 +1058,40 @@ export default {
     gap: 20px;
     padding: 12px;
   }
-  
+
   .filter-group {
     padding: 0 12px;
   }
-  
+
   .filter-group::after {
     display: none;
   }
-  
+
   .data-count::after {
     display: none;
   }
-  
+
   .year-slider {
     width: 100%;
   }
-  
+
   .year-labels {
     font-size: 10px;
   }
-  
+
   .filter-select {
     width: 120px;
   }
-  
+
   .filter-btn {
     margin-left: 0;
     margin-top: 8px;
   }
-  
+
   .main-content {
     padding: 24px 16px;
   }
-  
+
   .filter-bar {
     flex-direction: column;
     align-items: flex-start;
@@ -1114,36 +1101,34 @@ export default {
     right: 16px;
     padding: 16px;
   }
-  
+
   .filter-group {
     align-items: flex-start;
     min-width: 100%;
   }
-  
+
   .year-slider {
     width: 100%;
   }
-  
+
   .filter-select {
     width: 100%;
   }
-  
+
   .data-count {
     align-self: center;
   }
 }
 </style>
-=======
-import { onMounted } from 'vue'
+<!-- import { onMounted } from 'vue'
 import * as d3 from 'd3'
 
 export default {
-  setup() {
-    onMounted(() => {
-      // 这里将添加D3.js网络图实现
-      console.log('Network view mounted')
-    })
-  }
+setup() {
+onMounted(() => {
+// 这里将添加D3.js网络图实现
+console.log('Network view mounted')
+})
 }
-</script>
->>>>>>> a0fb820d53d87b0009869acd394b0a9bcbce725b
+}
+</script> -->

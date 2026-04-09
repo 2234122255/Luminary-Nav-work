@@ -1,6 +1,5 @@
 <template>
   <div id="app">
-    <!-- 科技感背景 -->
     <div class="tech-background">
       <div class="grid-pattern"></div>
       <div class="floating-icons">
@@ -10,44 +9,31 @@
         <div class="icon network-icon">🌐</div>
       </div>
       
-      <!-- 中央指纹区域 -->
       <div class="fingerprint-section">
         <div class="fingerprint-panel">
           <div class="fingerprint-graphic">
             <div class="fingerprint-svg">
               <svg viewBox="0 0 200 200" class="fingerprint-icon">
-                <!-- 外圈指纹 -->
                 <path d="M100 20 Q120 40 140 60 Q160 80 180 100 Q160 120 140 140 Q120 160 100 180 Q80 160 60 140 Q40 120 20 100 Q40 80 60 60 Q80 40 100 20" 
                       fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="3" stroke-linecap="round"/>
-                <!-- 内圈指纹 -->
                 <path d="M100 30 Q115 45 130 60 Q145 75 160 90 Q145 105 130 120 Q115 135 100 150 Q85 135 70 120 Q55 105 40 90 Q55 75 70 60 Q85 45 100 30" 
                       fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round"/>
-                <!-- 指纹细节点 -->
                 <circle cx="100" cy="100" r="4" fill="rgba(255,255,255,1)" class="fingerprint-dot"/>
                 <circle cx="80" cy="80" r="3" fill="rgba(255,255,255,0.8)" class="fingerprint-dot"/>
                 <circle cx="120" cy="80" r="3" fill="rgba(255,255,255,0.8)" class="fingerprint-dot"/>
                 <circle cx="80" cy="120" r="3" fill="rgba(255,255,255,0.8)" class="fingerprint-dot"/>
                 <circle cx="120" cy="120" r="3" fill="rgba(255,255,255,0.8)" class="fingerprint-dot"/>
-                <!-- 额外的指纹线条 -->
-                <path d="M60 100 Q80 110 100 100 Q120 90 140 100" 
-                      fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/>
-                <path d="M70 70 Q90 80 110 70 Q130 60 150 70" 
-                      fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1" stroke-linecap="round"/>
-                <path d="M70 130 Q90 120 110 130 Q130 140 150 130" 
-                      fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1" stroke-linecap="round"/>
+                <path d="M60 100 Q80 110 100 100 Q120 90 140 100" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/>
               </svg>
             </div>
           </div>
-          <!-- 指向指纹的手 -->
           <div class="pointing-hand">👆</div>
         </div>
       </div>
     </div>
 
-    <!-- 顶部导航栏 -->
     <header class="header">
       <div class="header-container">
-        <!-- 品牌栏：Logo + 欢迎文案（合并为一行，更加简约） -->
         <div class="logo-section">
           <div class="logo-icon">
             <img src="@/assets/logo.jpg" alt="Logo" class="logo-image">
@@ -57,7 +43,6 @@
           </div>
         </div>
 
-        <!-- 导航菜单 -->
         <nav class="nav-menu">
           <router-link to="/" class="nav-link">首页</router-link>
           <router-link to="/rankings" class="nav-link">榜单</router-link>
@@ -65,24 +50,16 @@
           <router-link to="/network" class="nav-link">合著网络</router-link>
         </nav>
 
-        <!-- 搜索框 -->
         <div class="search-section">
           <div class="search-box">
             <i class="search-icon">🔍</i>
-            <input 
-              type="text" 
-              class="search-input" 
-              placeholder="搜索学者/论文"
-              v-model="searchQuery"
-              @keyup.enter="searchAuthors"
-            >
+            <input type="text" class="search-input" placeholder="搜索学者/论文" v-model="searchQuery" @keyup.enter="searchAuthors">
             <button class="clear-btn" @click="clearSearch" v-if="searchQuery">✕</button>
           </div>
         </div>
       </div>
     </header>
 
-    <!-- 轮播图区域 -->
     <div class="carousel-section">
       <div class="carousel-container">
         <div class="carousel-wrapper" :style="{ 
@@ -102,94 +79,63 @@
             </div>
           </div>
         </div>
-        
-        <!-- 轮播图指示器 -->
         <div class="carousel-indicators">
-          <button 
-            v-for="(slide, index) in carouselSlides" 
-            :key="index"
-            class="indicator"
-            :class="{ active: currentSlide === index }"
-            @click="goToSlide(index)"
-          ></button>
+          <button v-for="(slide, index) in carouselSlides" :key="index" class="indicator" :class="{ active: currentSlide === index }" @click="goToSlide(index)"></button>
         </div>
-        
-        <!-- 轮播图控制按钮 -->
-        <button class="carousel-btn prev-btn" @click="prevSlide">
-          <span>‹</span>
-        </button>
-        <button class="carousel-btn next-btn" @click="nextSlide">
-          <span>›</span>
-        </button>
+        <button class="carousel-btn prev-btn" @click="prevSlide"><span>‹</span></button>
+        <button class="carousel-btn next-btn" @click="nextSlide"><span>›</span></button>
       </div>
     </div>
 
-    <!-- 主内容区域 -->
     <main class="main-content">
-      <router-view/>
+      <router-view @show-detail="openModal" />
     </main>
 
-    <!-- 底部波浪效果 -->
+    <ScholarDetailModal 
+      :visible="isModalVisible" 
+      :scholar="selectedScholar" 
+      @close="isModalVisible = false" 
+    />
+
     <div class="footer-wave">
       <svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
-        <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" 
-              opacity=".25" fill="#667eea"/>
-        <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,65.6-42.79C1132.92,88.14,1200,43.56,1200,43.56V0Z" 
-              opacity=".5" fill="#667eea"/>
-        <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" 
-              fill="#667eea"/>
+        <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="#667eea"/>
+        <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,65.6-42.79C1132.92,88.14,1200,43.56,1200,43.56V0Z" opacity=".5" fill="#667eea"/>
       </svg>
     </div>
-
-    <!-- 底部联系信息 -->
     <footer class="footer">
       <div class="footer-content">
         <button class="contact-btn">联系我们</button>
         <div class="social-icons">
-          <div class="social-icon">📧</div>
-          <div class="social-icon">💼</div>
-          <div class="social-icon">🐦</div>
-          <div class="social-icon">📱</div>
-          <div class="social-icon">🔗</div>
+          <div class="social-icon">📧</div><div class="social-icon">💼</div><div class="social-icon">🔗</div>
         </div>
-        <div class="copyright">© 2021 All Rights Reserved</div>
+        <div class="copyright">© 2026 Luminary Nav. All Rights Reserved</div>
       </div>
     </footer>
   </div>
 </template>
 
 <script>
+// 核心修正：导入弹窗组件（请确保该文件在 src/components/ 下）
+import ScholarDetailModal from './views/AuthorDetailView.vue';
+
 export default {
+  name: 'App',
+  components: {
+    ScholarDetailModal
+  },
   data() {
     return {
+      isModalVisible: false,
+      selectedScholar: null,
       searchQuery: '',
       currentSlide: 0,
       previousSlide: 0,
       carouselSlides: [
-        {
-          icon: '🚀',
-          title: '科技创新',
-          description: '探索前沿科技，引领未来发展',
-          gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-        },
-        {
-          icon: '🔬',
-          title: '学术研究',
-          description: '深度学术分析，发现研究热点',
-          gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
-        },
-        {
-          icon: '🌐',
-          title: '全球网络',
-          description: '连接世界学者，构建合作桥梁',
-          gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-        },
-        {
-          icon: '📊',
-          title: '数据分析',
-          description: '智能数据挖掘，洞察学术趋势',
-          gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
-        }
+        { icon: '🚀', title: '科技创新', description: '探索前沿科技，引领未来发展', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+        { icon: '🔬', title: '学术研究', description: '深度学术分析，发现研究热点', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+        { icon: '🌐', title: '全球网络', description: '连接世界学者，构建合作桥梁', gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
+        { icon: '📊', title: '数据分析', description: '智能数据挖掘，洞察学术趋势', gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' }
       ]
     }
   },
@@ -200,6 +146,10 @@ export default {
     this.stopAutoPlay()
   },
   methods: {
+    openModal(scholar) {
+      this.selectedScholar = scholar;
+      this.isModalVisible = true;
+    },
     searchAuthors() {
       if (this.searchQuery.trim()) {
         this.$router.push(`/author/search?q=${encodeURIComponent(this.searchQuery)}`)
@@ -214,37 +164,27 @@ export default {
     },
     prevSlide() {
       this.previousSlide = this.currentSlide
-      this.currentSlide = this.currentSlide === 0 
-        ? this.carouselSlides.length - 1 
-        : this.currentSlide - 1
+      this.currentSlide = this.currentSlide === 0 ? this.carouselSlides.length - 1 : this.currentSlide - 1
     },
     goToSlide(index) {
       this.previousSlide = this.currentSlide
       this.currentSlide = index
     },
     getTransitionDuration() {
-      // 如果是边界切换（最后一张到第一张，或第一张到最后一张），使用更短的过渡时间
       const isBoundaryTransition = 
         (this.currentSlide === 0 && this.previousSlide === this.carouselSlides.length - 1) ||
         (this.currentSlide === this.carouselSlides.length - 1 && this.previousSlide === 0)
-      
       return isBoundaryTransition ? 0.3 : 0.6
     },
     startAutoPlay() {
-      this.autoPlayInterval = setInterval(() => {
-        this.previousSlide = this.currentSlide
-        this.nextSlide()
-      }, 4000)
+      this.autoPlayInterval = setInterval(() => { this.nextSlide() }, 4000)
     },
     stopAutoPlay() {
-      if (this.autoPlayInterval) {
-        clearInterval(this.autoPlayInterval)
-      }
+      if (this.autoPlayInterval) clearInterval(this.autoPlayInterval)
     }
   }
 }
 </script>
-
 <style scoped>
 /* 全局样式 */
 * {

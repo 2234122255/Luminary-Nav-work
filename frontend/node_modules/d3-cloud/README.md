@@ -106,7 +106,7 @@ rotation angle (in degrees) for each word.  If not specified, returns the
 current rotate accessor function, which defaults to:
 
 ```js
-function() { return (~~(Math.random() * 6) - 3) * 30; }
+() => ~~(random() * 6) - 3) * 30
 ```
 
 A constant may be specified instead of a function.
