@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+   <div id="app">
     <div class="tech-background">
       <div class="grid-pattern"></div>
       <div class="floating-icons">
@@ -91,8 +91,6 @@
     </header>
 
 
-    <div class="carousel-section"> 
-
     <div class="carousel-section" v-if="$route.path === '/'">
 
             <div class="carousel-container">
@@ -153,8 +151,6 @@
 import axios from 'axios'  // 重要：导入 axios
 import ScholarDetailModal from './views/AuthorDetailView.vue'
 
-// 核心修正：导入弹窗组件（请确保该文件在 src/components/ 下）
-import ScholarDetailModal from './views/AuthorDetailView.vue';
 import AiChatDialog from './components/AiChatDialog.vue';
 
 
@@ -774,7 +770,9 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-=======
+}  /* ← 这里之前缺少了闭合大括号 */
+
+/* 下面的 .ai-chat-icon 样式现在独立，不再被错误嵌套 */
 .ai-chat-icon {
   display: flex;
   align-items: center;
@@ -804,7 +802,6 @@ export default {
   box-shadow: none;
   animation: none;
   backdrop-filter: none;
-
 }
 
 /* 轮播图区域 */
