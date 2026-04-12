@@ -407,6 +407,7 @@ export default {
       const centerX = width / 2
       const centerY = height / 2
       const radius = Math.max(120, Math.min(safeWidth, safeHeight) * 0.46)
+      const golden = Math.PI * (3 - Math.sqrt(5))
       const sourceLinks = networkLinks.value || []
 
       // 使用后端真实数据构建图节点（圆形分层初始化）
@@ -422,14 +423,16 @@ export default {
         const seed = getIdSeed(node.id || i)
         const noiseA = (seed % 1000) / 1000
         const noiseB = ((seed >> 3) % 1000) / 1000
-        const noiseC = ((seed >> 7) % 1000) / 1000
         const importance = Number(node.importance) || 0
         const degree = degreeMap.get(node.id) || 0
         const rankNorm = Math.min(1, Math.max(0, (Number(node.ranking) || maxRanking) / maxRanking))
-        const angle = noiseA * Math.PI * 2 + (noiseB - 0.5) * 0.8
-        const outwardBias = (degree <= 1 && rankNorm > 0.6) ? 0.2 : 0
-        const baseFactor = 0.16 + noiseC * 0.58 + outwardBias + (1 - importance) * 0.08 + (noiseB - 0.5) * 0.18
-        const targetRadius = radius * Math.max(0.08, Math.min(0.92, baseFactor))
+        const t = sortedRawNodes.length <= 1 ? 0 : i / (sortedRawNodes.length - 1)
+        const outwardFactor = Math.max(rankNorm, 1 - importance, degree <= 1 ? 0.72 : 0.35)
+        const baseFactor = 0.1 + outwardFactor * 0.38 + (noiseA - 0.5) * 0.24 + Math.pow(t, 0.9) * 0.08
+        const radialJitter = (noiseB - 0.5) * 0.12
+        const targetRadius = radius * Math.max(0.08, Math.min(0.9, baseFactor + radialJitter))
+        const angle = i * golden + (noiseB - 0.5) * 2.2
+
         const sizeBase = Number(node.size) || 5
         const rankSizeScale = rankNorm > 0.92
           ? 0.2
@@ -439,14 +442,28 @@ export default {
               ? 0.55
               : 0.78
         const adjustedSize = Math.max(1.1, Math.min(8.2, sizeBase * rankSizeScale))
+        const edgeRatio = targetRadius / radius
+        const edgeShrink = edgeRatio > 0.9
+          ? 0.16
+          : edgeRatio > 0.84
+            ? 0.24
+            : edgeRatio > 0.76
+              ? 0.4
+              : 1
+        const finalSize = Math.max(0.4, adjustedSize * edgeShrink)
+        const nodePad = 18 + finalSize * 1.8
+        const minX = margin + nodePad
+        const maxX = width - margin - nodePad
+        const minY = margin + nodePad
+        const maxY = height - margin - nodePad
         return {
           ...node,
           x: centerX + Math.cos(angle) * targetRadius,
           y: centerY + Math.sin(angle) * targetRadius,
-          size: adjustedSize,
+          size: finalSize,
           importance,
           targetRadius,
-          boundaryRadius: radius * (0.84 + (((seed >> 11) % 1000) / 1000) * 0.16)
+          boundaryRadius: radius * (0.83 + noiseB * 0.13)
         }
       })
       const nodeMap = new Map(nodes.map((node) => [node.id, node]))
@@ -462,13 +479,6 @@ export default {
           .text('暂无网络数据')
         return
       }
-
-      // 柔和底纹（不加规整边框）
-      svg.append('circle')
-        .attr('cx', centerX)
-        .attr('cy', centerY)
-        .attr('r', radius + 44)
-        .attr('fill', 'rgba(139, 92, 246, 0.05)')
 
       const keepInCloud = (node) => {
         const dx = node.x - centerX
@@ -518,11 +528,11 @@ export default {
         .force('link', d3.forceLink(simLinks).id((d) => d.id).distance(34).strength(0.08))
         .force('charge', d3.forceManyBody().strength(-17))
         .force('collide', d3.forceCollide().radius((d) => d.size + 1.8).iterations(1))
-        .force('radial', d3.forceRadial((d) => d.targetRadius || radius * 0.45, centerX, centerY).strength(0.032))
-        .force('x', d3.forceX(centerX).strength(0.018))
-        .force('y', d3.forceY(centerY).strength(0.018))
-        .alpha(0.55)
-        .alphaDecay(0.06)
+        .force('radial', d3.forceRadial((d) => d.targetRadius || radius * 0.45, centerX, centerY).strength(0.035))
+        .force('x', d3.forceX(centerX).strength(0.012))
+        .force('y', d3.forceY(centerY).strength(0.012))
+        .alpha(0.42)
+        .alphaDecay(0.08)
         .stop()
 
       const tickCount = nodes.length > 900 ? 35 : (nodes.length > 500 ? 50 : 70)
@@ -532,21 +542,22 @@ export default {
       }
       simulation.stop()
 
-      // 二次扰动，进一步打散轮廓，同时保持不越界
+      // 额外打散边缘，避免形成明显外圈聚集
       for (const node of nodes) {
-        if ((node.targetRadius || 0) < radius * 0.62) continue
+        const edgeRatioNow = (node.targetRadius || 0) / radius
+        if (edgeRatioNow < 0.72) continue
+        const seed = getIdSeed(node.id)
         const dx = node.x - centerX
         const dy = node.y - centerY
         const dist = Math.sqrt(dx * dx + dy * dy) || 1
         const radialX = dx / dist
         const radialY = dy / dist
-        const tangentX = -dy / dist
-        const tangentY = dx / dist
-        const seed = getIdSeed(node.id)
-        const jitterTan = (((seed >> 5) % 1000) / 1000 - 0.5) * 14
-        const jitterRad = (((seed >> 9) % 1000) / 1000 - 0.5) * 10
-        node.x += tangentX * jitterTan + radialX * jitterRad
-        node.y += tangentY * jitterTan + radialY * jitterRad
+        const tangentX = -radialY
+        const tangentY = radialX
+        const jRad = (((seed >> 7) % 1000) / 1000 - 0.5) * 14
+        const jTan = (((seed >> 13) % 1000) / 1000 - 0.5) * 10
+        node.x += radialX * jRad + tangentX * jTan
+        node.y += radialY * jRad + tangentY * jTan
         keepInCloud(node)
       }
 
