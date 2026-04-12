@@ -837,9 +837,11 @@ export default {
 
 .slide-content.hotspot-style {
   position: relative;
-  margin-right: 40px;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 20px;
 }
-
 .slide-bg {
   width: 100%;
   height: 100%;
@@ -860,9 +862,7 @@ export default {
   transition: transform 0.5s ease;
 }
 
-.carousel-slide:hover .slide-bg-image {
-  transform: scale(1.05);
-}
+
 
 .slide-text-overlay {
   position: absolute;
@@ -1072,9 +1072,6 @@ export default {
   }
   .carousel-section {
     padding: 20px 0;
-  }
-  .carousel-container {
-    margin: 0 20px;
   }
   .carousel-slide {
     height: 250px;
