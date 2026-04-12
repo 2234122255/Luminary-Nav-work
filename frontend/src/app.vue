@@ -56,23 +56,24 @@
             <input type="text" class="search-input" placeholder="搜索学者/论文" v-model="searchQuery" @keyup.enter="searchAuthors">
             <button class="clear-btn" @click="clearSearch" v-if="searchQuery">✕</button>
           </div>
+          <!-- AI Chat Icon -->
+          <div class="ai-chat-icon" @click="toggleAiChat" title="AI学术助手">
+            <span class="icon">🤖</span>
+          </div>
         </div>
       </div>
     </header>
 
-    <div class="carousel-section">
+    <div class="carousel-section" v-if="$route.path === '/'">
       <div class="carousel-container">
         <div class="carousel-wrapper" :style="{ 
           transform: `translateX(-${currentSlide * 100}%)`,
           transition: `transform ${getTransitionDuration()}s cubic-bezier(0.25, 0.8, 0.25, 1)`
         }">
-          <div class="carousel-slide" v-for="(slide, index) in carouselSlides" :key="index">
-            <div class="slide-content">
-              <div class="slide-image">
-                <div class="slide-bg" :style="{ background: slide.gradient }"></div>
-                <div class="slide-icon">{{ slide.icon }}</div>
-              </div>
-              <div class="slide-text">
+          <div class="carousel-slide" v-for="(slide, index) in carouselSlides" :key="index" @click="openLink(slide.link)" style="cursor: pointer;">
+            <div class="slide-content hotspot-style">
+              <div class="slide-bg-image" :style="{ backgroundImage: `url(${slide.image})` }"></div>
+              <div class="slide-text-overlay">
                 <h3 class="slide-title">{{ slide.title }}</h3>
                 <p class="slide-description">{{ slide.description }}</p>
               </div>
@@ -97,6 +98,8 @@
       @close="isModalVisible = false" 
     />
 
+    <AiChatDialog :visible="isAiChatVisible" @close="isAiChatVisible = false" />
+
     <div class="footer-wave">
       <svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
         <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="#667eea"/>
@@ -118,24 +121,41 @@
 <script>
 // 核心修正：导入弹窗组件（请确保该文件在 src/components/ 下）
 import ScholarDetailModal from './views/AuthorDetailView.vue';
+import AiChatDialog from './components/AiChatDialog.vue';
 
 export default {
   name: 'App',
   components: {
-    ScholarDetailModal
+    ScholarDetailModal,
+    AiChatDialog
   },
   data() {
     return {
       isModalVisible: false,
+      isAiChatVisible: false,
       selectedScholar: null,
       searchQuery: '',
       currentSlide: 0,
       previousSlide: 0,
       carouselSlides: [
-        { icon: '🚀', title: '科技创新', description: '探索前沿科技，引领未来发展', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-        { icon: '🔬', title: '学术研究', description: '深度学术分析，发现研究热点', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
-        { icon: '🌐', title: '全球网络', description: '连接世界学者，构建合作桥梁', gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
-        { icon: '📊', title: '数据分析', description: '智能数据挖掘，洞察学术趋势', gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' }
+        { 
+          title: '【茶思AI每周摘要】Meta超级智能团队首个大模型', 
+          description: 'Anthropic 官宣史上最强模型 Mythos；智谱新开源GLM-5.1，支持独立持续工作8小时的长程任务；Meta推出全新自研模型 Muse Spark。', 
+          image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1200&auto=format&fit=crop',
+          link: 'https://www.chaspark.com/#/hotspots/1261188204806799360'
+        },
+        { 
+          title: '由Claude Code源码泄露，到Agent怎么使用才安全？', 
+          description: '探讨在企业级 AI 应用中，如何通过沙箱技术（Sandboxing）提升 AI Agent 及其执行单元 Skill（技能）的安全性和稳定性。', 
+          image: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?q=80&w=1200&auto=format&fit=crop',
+          link: 'https://www.chaspark.com/#/hotspots/1260043906599194624'
+        },
+        { 
+          title: '把 Claude Code 源码蒸馏成 Agent Skill', 
+          description: '从 Claude Code 的实现中提炼了六个 harness 层的设计原则，产出一个可以直接安装的 Agent Skill，指导 harness 开发与设计的最佳实践。', 
+          image: 'https://images.unsplash.com/photo-1550439062-609e1531270e?q=80&w=1200&auto=format&fit=crop',
+          link: 'https://www.chaspark.com/#/hotspots/1260673729431998464'
+        }
       ]
     }
   },
@@ -146,6 +166,9 @@ export default {
     this.stopAutoPlay()
   },
   methods: {
+    toggleAiChat() {
+      this.isAiChatVisible = !this.isAiChatVisible;
+    },
     openModal(scholar) {
       this.selectedScholar = scholar;
       this.isModalVisible = true;
@@ -175,6 +198,11 @@ export default {
         (this.currentSlide === 0 && this.previousSlide === this.carouselSlides.length - 1) ||
         (this.currentSlide === this.carouselSlides.length - 1 && this.previousSlide === 0)
       return isBoundaryTransition ? 0.3 : 0.6
+    },
+    openLink(link) {
+      if (link) {
+        window.open(link, '_blank');
+      }
     },
     startAutoPlay() {
       this.autoPlayInterval = setInterval(() => { this.nextSlide() }, 4000)
@@ -571,6 +599,37 @@ export default {
   color: white;
 }
 
+.ai-chat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+  margin-left: 15px;
+}
+
+.ai-chat-icon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 15px rgba(102, 126, 234, 0.6);
+}
+
+.ai-chat-icon .icon {
+  font-size: 20px;
+  position: static;
+  width: auto;
+  height: auto;
+  background: none;
+  border: none;
+  box-shadow: none;
+  animation: none;
+  backdrop-filter: none;
+}
+
 /* 轮播图区域 */
 .carousel-section {
   margin-top: 100px;
@@ -581,6 +640,7 @@ export default {
 
 .carousel-container {
   max-width: 1200px;
+  height: 400px;
   margin: 0 auto;
   position: relative;
   overflow: hidden;
@@ -590,75 +650,71 @@ export default {
 
 .carousel-wrapper {
   display: flex;
+  height: 100%;
+  will-change: transform;
 }
 
 .carousel-slide {
-  min-width: 100%;
-  height: 300px;
-  position: relative;
-}
-
-.slide-content {
-  display: flex;
+  flex: 0 0 100%;
   height: 100%;
-  align-items: center;
-  padding: 0 60px;
+  padding: 0 10px;
+  box-sizing: border-box;
 }
 
-.slide-image {
-  flex: 0 0 200px;
-  height: 200px;
+.slide-content.hotspot-style {
   position: relative;
-  margin-right: 40px;
-}
-
-.slide-bg {
   width: 100%;
   height: 100%;
-  border-radius: 20px;
-  position: relative;
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-.slide-bg::before {
-  content: '';
+.slide-bg-image {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: inherit;
-  filter: blur(20px);
-  transform: scale(1.2);
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: transform 0.5s ease;
 }
 
-.slide-icon {
+.carousel-slide:hover .slide-bg-image {
+  transform: scale(1.05);
+}
+
+.slide-text-overlay {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 80px;
-  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
-  z-index: 2;
-}
-
-.slide-text {
-  flex: 1;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 30px 40px 40px 40px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%);
   color: white;
+  box-sizing: border-box;
 }
 
 .slide-title {
-  font-size: 36px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  margin: 0 0 12px 0;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .slide-description {
-  font-size: 18px;
-  line-height: 1.6;
-  opacity: 0.9;
-  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  margin: 0;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* 轮播图指示器 */
