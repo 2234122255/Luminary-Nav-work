@@ -27,7 +27,7 @@
                 v-for="(author, index) in leaders"
                 :key="author.id"
                 class="ranking-item"
-                @click="$emit('show-detail', author)" 
+                @click="goToAuthorDetail(author)" 
                 style="cursor: pointer;"
                 :class="{ 'top-three': index < 3 }"
             >
@@ -103,7 +103,7 @@
       v-for="(author, index) in risingStars"
       :key="author.id"
       class="ranking-item"
-      @click="$emit('show-detail', author)" 
+      @click="goToAuthorDetail(author)" 
       style="cursor: pointer;"
       :class="{ 'top-three': index < 3 }"
     >
@@ -135,10 +135,12 @@
 
 <script>
 import { ref, onMounted, watch } from 'vue' // 必须加上 watch
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 export default {
   setup() {
+    const router = useRouter()
     // 领军人才数据
     const leaders = ref([])
     const loading = ref(true)
@@ -237,6 +239,34 @@ const fetchRisingStars = async () => {
   } catch (err) {
     console.error('潜力新星加载失败')
   }
+}
+
+const resolveAuthorId = async (author) => {
+  const directId = author?.id || author?.scholarId || author?.authorId
+  if (directId) return String(directId)
+
+  const name = String(author?.name || '').trim()
+  if (!name) return ''
+
+  try {
+    const resp = await axios.get('http://localhost:8080/api/rankings/search', {
+      params: { name, page: 1, size: 5 }
+    })
+    const list = Array.isArray(resp.data) ? resp.data : []
+    const exact = list.find((item) => String(item?.name || '').trim().toLowerCase() === name.toLowerCase())
+    return String(exact?.id || list[0]?.id || '')
+  } catch (e) {
+    return ''
+  }
+}
+
+const goToAuthorDetail = async (author) => {
+  const id = await resolveAuthorId(author)
+  if (!id) return
+  router.push({
+    name: 'AuthorDetail',
+    params: { id }
+  })
 }
 
     // 修改应用筛选方法，对接后端 API
@@ -426,7 +456,8 @@ const applyFilters = async () => {
         searchOrg,
         leaders,
         loading,
-        risingStars
+        risingStars,
+        goToAuthorDetail
     }
   }
 }

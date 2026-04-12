@@ -46,7 +46,6 @@
         <nav class="nav-menu">
           <router-link to="/" class="nav-link">首页</router-link>
           <router-link to="/rankings" class="nav-link">榜单</router-link>
-          <router-link to="/heatmap" class="nav-link">热力地图</router-link>
           <router-link to="/network" class="nav-link">合著网络</router-link>
         </nav>
 

@@ -33,6 +33,15 @@ const routes = [
         component: () => import('@/views/NetworkView.vue')
     },
     {
+        path: '/admin',
+        name: 'Admin',
+        component: () => import('@/views/AdminView.vue'),
+        meta: {
+            requiresAdmin: true,
+            hideInNav: true
+        }
+    },
+    {
         path: '/author/:id',
         name: 'AuthorDetail',
         component: () => import('@/views/AuthorDetailView.vue'),

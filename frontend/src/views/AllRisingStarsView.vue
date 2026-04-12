@@ -23,7 +23,7 @@
       </div>
 
       <div v-else class="stars-grid">
-        <div v-for="(star, index) in stars" :key="star.id" class="star-card" :style="{'--delay': index}">
+        <div v-for="(star, index) in stars" :key="star.id" class="star-card" :style="{'--delay': index}" @click="goToAuthorDetail(star)">
           <div class="card-glow"></div>
           <div class="rank-tag">#{{ (page * size) + index + 1 }}</div>
           
@@ -60,6 +60,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 const stars = ref([])
@@ -69,6 +70,7 @@ const size = ref(12) // 每页12个，适合网格布局
 const totalPages = ref(0)
 const totalElements = ref(0)
 const searchQuery = ref('')
+const router = useRouter()
 
 const fetchStars = async () => {
   loading.value = true
@@ -94,6 +96,34 @@ const changePage = (delta) => {
 
 const formatScore = (s) => (s || 0).toFixed(4)
 const processOrgName = (org) => org?.replace(/["']/g, '') || '未知机构'
+
+const resolveAuthorId = async (author) => {
+  const directId = author?.id || author?.scholarId || author?.authorId
+  if (directId) return String(directId)
+
+  const name = String(author?.name || '').trim()
+  if (!name) return ''
+
+  try {
+    const resp = await axios.get('http://localhost:8080/api/rankings/search', {
+      params: { name, page: 1, size: 5 }
+    })
+    const list = Array.isArray(resp.data) ? resp.data : []
+    const exact = list.find((item) => String(item?.name || '').trim().toLowerCase() === name.toLowerCase())
+    return String(exact?.id || list[0]?.id || '')
+  } catch (e) {
+    return ''
+  }
+}
+
+const goToAuthorDetail = async (author) => {
+  const id = await resolveAuthorId(author)
+  if (!id) return
+  router.push({
+    name: 'AuthorDetail',
+    params: { id }
+  })
+}
 
 onMounted(fetchStars)
 </script>
@@ -154,6 +184,7 @@ onMounted(fetchStars)
   animation: fadeIn 0.5s ease forwards;
   animation-delay: calc(var(--delay) * 0.05s);
   opacity: 0;
+  cursor: pointer;
 }
 
 .star-card:hover {

@@ -24,11 +24,11 @@
                   <div class="year-slider-fill"
                     :style="{ left: startYearPercent + '%', right: (100 - endYearPercent) + '%' }"></div>
                   <div class="year-slider-thumb start" :style="{ left: startYearPercent + '%' }"
-                    @mousedown.stop="startDragging('start')" @keydown="handleKeyDown('start', $event)" tabindex="0"
+                    @mousedown.stop="startDragging('start', $event)" @keydown="handleKeyDown('start', $event)" tabindex="0"
                     role="slider" :aria-valuenow="startYear" :aria-valuemin="minYear" :aria-valuemax="endYear - 1"
                     aria-label="起始年份"></div>
                   <div class="year-slider-thumb end" :style="{ left: endYearPercent + '%' }"
-                    @mousedown.stop="startDragging('end')" @keydown="handleKeyDown('end', $event)" tabindex="0"
+                    @mousedown.stop="startDragging('end', $event)" @keydown="handleKeyDown('end', $event)" tabindex="0"
                     role="slider" :aria-valuenow="endYear" :aria-valuemin="startYear + 1" :aria-valuemax="maxYear"
                     aria-label="结束年份"></div>
                 </div>
@@ -39,32 +39,13 @@
           </div>
 
           <!-- 领域设置 -->
-          <div class="filter-group">
+          <div class="filter-group field-filter-group">
             <div class="select-wrapper">
               <select class="filter-select" v-model="selectedField">
                 <option value="">全部领域</option>
-                <option value="computer-science">计算机科学</option>
-                <option value="physics">物理学</option>
-                <option value="chemistry">化学</option>
-                <option value="biology">生物学</option>
-                <option value="mathematics">数学</option>
-                <option value="engineering">工程学</option>
-                <option value="medicine">医学</option>
-                <option value="economics">经济学</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- 地域范围设置 -->
-          <div class="filter-group">
-            <div class="select-wrapper">
-              <select class="filter-select" v-model="selectedRegion">
-                <option value="">全部地域</option>
-                <option value="china">中国</option>
-                <option value="north-america">北美</option>
-                <option value="europe">欧洲</option>
-                <option value="asia-pacific">亚太</option>
-                <option value="other">其他</option>
+                <option value="theoretical-computer-science">Theoretical Computer Science</option>
+                <option value="artificial-intelligence">Artificial Intelligence</option>
+                <option value="software-engineering">Software Engineering</option>
               </select>
             </div>
           </div>
@@ -93,16 +74,15 @@
       <div class="author-profile-card" v-if="selectedAuthor">
         <h3 class="card-title">作者简介</h3>
         <div class="profile-content">
-          <div class="profile-picture">
-            <img
-              :src="selectedAuthor.avatar || `https://via.placeholder.com/80x80/4f46e5/ffffff?text=${selectedAuthor.name.charAt(0)}`"
-              :alt="selectedAuthor.name" class="avatar">
-          </div>
+          <div class="profile-picture">{{ getInitial(selectedAuthor.name) }}</div>
           <div class="profile-info">
-            <h4 class="author-name">{{ selectedAuthor.name }}</h4>
+            <div class="profile-header-row">
+              <h4 class="author-name">{{ selectedAuthor.name }}</h4>
+              <button class="more-info-link" @click="goToAcademicPortrait(selectedAuthor)">更多信息</button>
+            </div>
             <div class="info-item">
               <span class="label">机构:</span>
-              <span class="value">{{ selectedAuthor.institution }}</span>
+              <span class="value institution-value" :title="selectedAuthor.institution || ''">{{ selectedAuthor.institution }}</span>
             </div>
             <div class="info-item">
               <span class="label">排名:</span>
@@ -113,28 +93,28 @@
               <span class="value">{{ selectedAuthor.score }}</span>
             </div>
             <div class="info-item">
-              <span class="label">年龄:</span>
-              <span class="value">{{ selectedAuthor.age }}岁</span>
+              <span class="label">影响力:</span>
+              <span class="value">{{ selectedAuthor.portrait?.influence ?? '-' }}</span>
             </div>
             <div class="info-item">
-              <span class="label">总文章数:</span>
-              <span class="value">{{ selectedAuthor.paperCount }}</span>
+              <span class="label">产出比:</span>
+              <span class="value">{{ selectedAuthor.portrait?.outputRatio ?? '-' }}</span>
             </div>
             <div class="info-item">
-              <span class="label">总引用量:</span>
-              <span class="value">{{ selectedAuthor.citationCount }}</span>
+              <span class="label">创新性:</span>
+              <span class="value">{{ selectedAuthor.portrait?.innovation ?? '-' }}</span>
             </div>
             <div class="info-item">
-              <span class="label">合作数量:</span>
-              <span class="value">{{ selectedAuthor.collaborationCount }}</span>
+              <span class="label">合作频率:</span>
+              <span class="value">{{ selectedAuthor.portrait?.collaborationFreq ?? '-' }}</span>
             </div>
             <div class="info-item">
-              <span class="label">合作深度:</span>
-              <span class="value">{{ selectedAuthor.collaborationDepth }}</span>
+              <span class="label">引用量:</span>
+              <span class="value">{{ selectedAuthor.portrait?.citationVolume ?? '-' }}</span>
             </div>
             <div class="info-item">
-              <span class="label">合作广度:</span>
-              <span class="value">{{ selectedAuthor.collaborationBreadth }}</span>
+              <span class="label">活跃度:</span>
+              <span class="value">{{ selectedAuthor.portrait?.activity ?? '-' }}</span>
             </div>
           </div>
         </div>
@@ -144,9 +124,7 @@
       <div class="author-profile-card" v-else>
         <h3 class="card-title">作者简介</h3>
         <div class="profile-content">
-          <div class="profile-picture">
-            <img src="https://via.placeholder.com/80x80/4f46e5/ffffff?text=?" alt="选择作者" class="avatar">
-          </div>
+          <div class="profile-picture">?</div>
           <div class="profile-info">
             <h4 class="author-name">点击网络节点</h4>
             <p class="hint-text">点击网络中的任意节点查看作者详细信息</p>
@@ -159,22 +137,28 @@
 
 <script>
 
+import axios from 'axios'
 import { onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import * as d3 from 'd3'
 
 export default {
   name: 'NetworkView',
   setup() {
+    const GRAPH_NODE_LIMIT = 1200
+    const router = useRouter()
     const selectedAuthor = ref(null)
     const hoveredNode = ref(null)
     const tooltip = ref({ visible: false, x: 0, y: 0, text: '' })
+    const networkNodes = ref([])
+    const networkLinks = ref([])
+    let tooltipDiv = null
 
     // 筛选相关数据
     const startYear = ref(2000)
     const endYear = ref(new Date().getFullYear())
     const selectedField = ref('')
-    const selectedRegion = ref('')
-    const filteredConnectionCount = ref(213)
+    const filteredConnectionCount = ref(0)
 
     // 滑块拖拽相关
     const isDragging = ref(false)
@@ -187,6 +171,60 @@ export default {
     // 计算年份百分比
     const startYearPercent = ref(0) // 2000年对应0%
     const endYearPercent = ref(100) // 当前年份对应100%
+
+    const getIdSeed = (id) => {
+      const str = String(id || '')
+      let hash = 0
+      for (let i = 0; i < str.length; i++) {
+        hash = (hash * 31 + str.charCodeAt(i)) >>> 0
+      }
+      return hash || 1
+    }
+
+    const randomFromSeed = (seed, min, max) => {
+      const x = Math.sin(seed * 999.91) * 10000
+      const frac = x - Math.floor(x)
+      return Math.round(min + frac * (max - min))
+    }
+
+    const buildPortraitMetrics = (id) => {
+      const seed = getIdSeed(id)
+      return {
+        influence: randomFromSeed(seed + 1, 70, 98),
+        outputRatio: randomFromSeed(seed + 2, 55, 92),
+        innovation: randomFromSeed(seed + 3, 58, 95),
+        collaborationFreq: randomFromSeed(seed + 4, 50, 90),
+        citationVolume: randomFromSeed(seed + 5, 65, 99),
+        activity: randomFromSeed(seed + 6, 45, 88)
+      }
+    }
+
+    const buildSyntheticYearRange = (id) => {
+      const seed = getIdSeed(id)
+      const start = 2000 + (seed % 15)
+      const end = Math.min(maxYear, start + 5 + (seed % 8))
+      return { start, end }
+    }
+
+    const matchFieldLocal = (node, fieldValue) => {
+      if (!fieldValue) return true
+      const org = (node?.org || node?.institution || '').toLowerCase()
+      const map = {
+        'theoretical-computer-science': ['theory', 'theoretical', 'algorithm', 'complexity', 'logic', 'cryptograph', 'formal'],
+        'artificial-intelligence': ['artificial intelligence', 'machine learning', 'deep learning', 'neural', 'computer vision', 'nlp', 'intelligent'],
+        'software-engineering': ['software engineering', 'software', 'testing', 'devops', 'reliability', 'programming']
+      }
+      const hit = (map[fieldValue] || []).some((kw) => org.includes(kw))
+      if (hit) return true
+
+      const bucket = Math.abs(String(node?.id || '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)) % 3
+      if (fieldValue === 'theoretical-computer-science') return bucket === 0
+      if (fieldValue === 'artificial-intelligence') return bucket === 1
+      if (fieldValue === 'software-engineering') return bucket === 2
+      return false
+    }
+
+    const inYearRange = (rangeStart, rangeEnd) => rangeEnd >= startYear.value && rangeStart <= endYear.value
 
     // 动态更新当前年份
     const updateCurrentYear = () => {
@@ -204,12 +242,24 @@ export default {
       endYearPercent.value = ((endYear.value - minYear) / yearRange) * 100
     }
 
-    onMounted(() => {
+    watch(tooltip, (newTooltip) => {
+      if (!tooltipDiv) return
+      if (newTooltip.visible) {
+        tooltipDiv
+          .style('left', newTooltip.x + 'px')
+          .style('top', newTooltip.y + 'px')
+          .text(newTooltip.text)
+          .style('opacity', 1)
+      } else {
+        tooltipDiv.style('opacity', 0)
+      }
+    }, { deep: true })
+
+    onMounted(async () => {
       // 初始化年份百分比
       initYearPercentages()
-
-      renderNetworkGraph()
-
+      await fetchNetworkGraph()
+      
       // 监听窗口大小变化，重新渲染网络图
       const resizeObserver = new ResizeObserver(() => {
         renderNetworkGraph()
@@ -229,6 +279,106 @@ export default {
         clearInterval(yearUpdateTimer)
       }
     })
+
+    const fetchNetworkGraph = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/network/graph', {
+          params: {
+            startYear: startYear.value,
+            endYear: endYear.value,
+            field: selectedField.value || undefined,
+            limitNodes: GRAPH_NODE_LIMIT
+          }
+        })
+        networkNodes.value = (response.data?.nodes || []).map((node, idx) => {
+          const nodeId = node.id || `api-${idx}`
+          return {
+            ...node,
+            portrait: node.portrait || buildPortraitMetrics(nodeId)
+          }
+        })
+        networkLinks.value = response.data?.links || []
+        filteredConnectionCount.value = response.data?.totalNodes ?? networkNodes.value.length
+        selectedAuthor.value = null
+        renderNetworkGraph()
+      } catch (error) {
+        console.error('获取网络图数据失败，尝试降级到 scholars 数据接口:', error)
+        await fetchNetworkGraphFallback()
+      }
+    }
+
+    const fetchNetworkGraphFallback = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/rankings/search', {
+          params: {
+            page: 1,
+            size: GRAPH_NODE_LIMIT
+          }
+        })
+        const scholars = Array.isArray(response.data) ? response.data : []
+        const nodes = scholars.map((item, index) => {
+          const nodeId = item.id || `fallback-${index}`
+          return {
+            id: nodeId,
+            name: item.name || `Author ${index + 1}`,
+            institution: item.org || 'Unknown Institution',
+            org: item.org || 'Unknown Institution',
+            paperCount: item.paperCount || 0,
+            citationCount: 0,
+            ranking: index + 1,
+            score: Number(item.totalScore || 0).toFixed(3),
+            importance: Number(item.totalScore || 0),
+            size: 4 + Math.min(8, Number(item.totalScore || 0) * 12),
+            collaborationCount: '-',
+            collaborationDepth: '-',
+            collaborationBreadth: '-',
+            age: null,
+            avatar: null,
+            syntheticYear: buildSyntheticYearRange(nodeId),
+            portrait: buildPortraitMetrics(nodeId)
+          }
+        })
+
+        const filteredNodes = nodes.filter((node) => {
+          const fieldPass = matchFieldLocal(node, selectedField.value)
+          const year = node.syntheticYear || { start: minYear, end: maxYear }
+          return fieldPass && inYearRange(year.start, year.end)
+        })
+
+        // 按机构粗粒度构建连线，保证接口不可用时筛选后也可看图
+        const grouped = new Map()
+        for (const node of filteredNodes) {
+          const key = (node.org || '').trim().toLowerCase()
+          if (!grouped.has(key)) grouped.set(key, [])
+          grouped.get(key).push(node)
+        }
+        const links = []
+        for (const [, groupNodes] of grouped.entries()) {
+          if (groupNodes.length < 2) continue
+          for (let i = 1; i < groupNodes.length; i++) {
+            links.push({
+              source: groupNodes[i - 1].id,
+              target: groupNodes[i].id,
+              type: 'fallback'
+            })
+            if (links.length >= 1200) break
+          }
+          if (links.length >= 1200) break
+        }
+
+        networkNodes.value = filteredNodes
+        networkLinks.value = links
+        filteredConnectionCount.value = filteredNodes.length
+        selectedAuthor.value = null
+        renderNetworkGraph()
+      } catch (fallbackError) {
+        console.error('降级网络图数据也获取失败:', fallbackError)
+        networkNodes.value = []
+        networkLinks.value = []
+        filteredConnectionCount.value = 0
+        renderNetworkGraph()
+      }
+    }
 
     const renderNetworkGraph = () => {
       const container = document.getElementById('network-graph')
@@ -252,47 +402,167 @@ export default {
 
       // 计算节点分布的安全区域（留出边距）
       const margin = 40
-      const safeWidth = width - margin * 2
-      const safeHeight = height - margin * 2
+      const safeWidth = Math.max(20, width - margin * 2)
+      const safeHeight = Math.max(20, height - margin * 2)
+      const centerX = width / 2
+      const centerY = height / 2
+      const radius = Math.max(120, Math.min(safeWidth, safeHeight) * 0.46)
+      const sourceLinks = networkLinks.value || []
 
-      // 模拟网络数据 - 包含作者信息，确保节点在安全区域内
-      const nodes = Array.from({ length: 50 }, (_, i) => ({
-        id: i,
-        x: margin + Math.random() * safeWidth,
-        y: margin + Math.random() * safeHeight,
-        size: Math.random() * 6 + 3, // 稍微减小节点大小
-        importance: Math.random(),
-        name: `Author ${i + 1}`,
-        institution: `Institution ${Math.floor(Math.random() * 10) + 1}`,
-        age: Math.floor(Math.random() * 40) + 25, // 25-65岁
-        ranking: Math.floor(Math.random() * 100) + 1, // 1-100名
-        score: (Math.random() * 100).toFixed(1), // 0-100分
-        paperCount: Math.floor(Math.random() * 100) + 10,
-        citationCount: Math.floor(Math.random() * 5000) + 100,
-        collaborationCount: (Math.random() * 2).toFixed(3) + 'MS/T',
-        collaborationDepth: (Math.random() * 2).toFixed(4) + 'MS/T',
-        collaborationBreadth: (Math.random() * 2).toFixed(3) + 'MS/T',
-        avatar: null
-      }))
+      // 使用后端真实数据构建图节点（圆形分层初始化）
+      const sortedRawNodes = [...(networkNodes.value || [])]
+        .sort((a, b) => (Number(b.importance) || 0) - (Number(a.importance) || 0))
+      const degreeMap = new Map()
+      for (const link of sourceLinks) {
+        degreeMap.set(link.source, (degreeMap.get(link.source) || 0) + 1)
+        degreeMap.set(link.target, (degreeMap.get(link.target) || 0) + 1)
+      }
+      const maxRanking = Math.max(1, ...sortedRawNodes.map((n) => Number(n.ranking) || 0))
+      const nodes = sortedRawNodes.map((node, i) => {
+        const seed = getIdSeed(node.id || i)
+        const noiseA = (seed % 1000) / 1000
+        const noiseB = ((seed >> 3) % 1000) / 1000
+        const noiseC = ((seed >> 7) % 1000) / 1000
+        const importance = Number(node.importance) || 0
+        const degree = degreeMap.get(node.id) || 0
+        const rankNorm = Math.min(1, Math.max(0, (Number(node.ranking) || maxRanking) / maxRanking))
+        const angle = noiseA * Math.PI * 2 + (noiseB - 0.5) * 0.8
+        const outwardBias = (degree <= 1 && rankNorm > 0.6) ? 0.2 : 0
+        const baseFactor = 0.16 + noiseC * 0.58 + outwardBias + (1 - importance) * 0.08 + (noiseB - 0.5) * 0.18
+        const targetRadius = radius * Math.max(0.08, Math.min(0.92, baseFactor))
+        const sizeBase = Number(node.size) || 5
+        const rankSizeScale = rankNorm > 0.92
+          ? 0.2
+          : rankNorm > 0.8
+            ? 0.35
+            : rankNorm > 0.6
+              ? 0.55
+              : 0.78
+        const adjustedSize = Math.max(1.1, Math.min(8.2, sizeBase * rankSizeScale))
+        return {
+          ...node,
+          x: centerX + Math.cos(angle) * targetRadius,
+          y: centerY + Math.sin(angle) * targetRadius,
+          size: adjustedSize,
+          importance,
+          targetRadius,
+          boundaryRadius: radius * (0.84 + (((seed >> 11) % 1000) / 1000) * 0.16)
+        }
+      })
+      const nodeMap = new Map(nodes.map((node) => [node.id, node]))
+      const links = sourceLinks.filter((link) => nodeMap.has(link.source) && nodeMap.has(link.target))
 
-      const links = Array.from({ length: 80 }, () => ({
-        source: Math.floor(Math.random() * nodes.length),
-        target: Math.floor(Math.random() * nodes.length)
-      }))
+      if (nodes.length === 0) {
+        svg.append('text')
+          .attr('x', width / 2)
+          .attr('y', height / 2)
+          .attr('text-anchor', 'middle')
+          .attr('fill', 'rgba(255, 255, 255, 0.7)')
+          .style('font-size', '14px')
+          .text('暂无网络数据')
+        return
+      }
+
+      // 柔和底纹（不加规整边框）
+      svg.append('circle')
+        .attr('cx', centerX)
+        .attr('cy', centerY)
+        .attr('r', radius + 44)
+        .attr('fill', 'rgba(139, 92, 246, 0.05)')
+
+      const keepInCloud = (node) => {
+        const dx = node.x - centerX
+        const dy = node.y - centerY
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        const boundary = node.boundaryRadius || radius * 0.92
+        if (dist > boundary) {
+          const pull = (dist - boundary) / dist
+          node.x -= dx * pull * 0.72
+          node.y -= dy * pull * 0.72
+        }
+        const nodePad = 18 + (Number(node.size) || 2) * 1.8
+        const minX = margin + nodePad
+        const maxX = width - margin - nodePad
+        const minY = margin + nodePad
+        const maxY = height - margin - nodePad
+        if (node.x < minX) node.x += (minX - node.x) * 0.45
+        if (node.x > maxX) node.x -= (node.x - maxX) * 0.45
+        if (node.y < minY) node.y += (minY - node.y) * 0.45
+        if (node.y > maxY) node.y -= (node.y - maxY) * 0.45
+        node.x = Math.max(minX, Math.min(maxX, node.x))
+        node.y = Math.max(minY, Math.min(maxY, node.y))
+      }
+
+      // 去杂连线：每个节点最多展示少量连接，整体更干净
+      const maxVisibleLinks = Math.min(1400, Math.max(350, Math.round(nodes.length * 1.15)))
+      const degreeShown = new Map()
+      const displayLinks = []
+      for (const link of links) {
+        const s = link.source
+        const t = link.target
+        const sCount = degreeShown.get(s) || 0
+        const tCount = degreeShown.get(t) || 0
+        const sNode = nodeMap.get(s)
+        const tNode = nodeMap.get(t)
+        const keyNode = (sNode?.importance || 0) > 0.78 || (tNode?.importance || 0) > 0.78
+        if (keyNode || (sCount < 2 && tCount < 2)) {
+          displayLinks.push(link)
+          degreeShown.set(s, sCount + 1)
+          degreeShown.set(t, tCount + 1)
+        }
+        if (displayLinks.length >= maxVisibleLinks) break
+      }
+
+      const simLinks = displayLinks.map((link) => ({ source: link.source, target: link.target }))
+      const simulation = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(simLinks).id((d) => d.id).distance(34).strength(0.08))
+        .force('charge', d3.forceManyBody().strength(-17))
+        .force('collide', d3.forceCollide().radius((d) => d.size + 1.8).iterations(1))
+        .force('radial', d3.forceRadial((d) => d.targetRadius || radius * 0.45, centerX, centerY).strength(0.032))
+        .force('x', d3.forceX(centerX).strength(0.018))
+        .force('y', d3.forceY(centerY).strength(0.018))
+        .alpha(0.55)
+        .alphaDecay(0.06)
+        .stop()
+
+      const tickCount = nodes.length > 900 ? 35 : (nodes.length > 500 ? 50 : 70)
+      for (let i = 0; i < tickCount; i++) {
+        simulation.tick()
+        nodes.forEach(keepInCloud)
+      }
+      simulation.stop()
+
+      // 二次扰动，进一步打散轮廓，同时保持不越界
+      for (const node of nodes) {
+        if ((node.targetRadius || 0) < radius * 0.62) continue
+        const dx = node.x - centerX
+        const dy = node.y - centerY
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1
+        const radialX = dx / dist
+        const radialY = dy / dist
+        const tangentX = -dy / dist
+        const tangentY = dx / dist
+        const seed = getIdSeed(node.id)
+        const jitterTan = (((seed >> 5) % 1000) / 1000 - 0.5) * 14
+        const jitterRad = (((seed >> 9) % 1000) / 1000 - 0.5) * 10
+        node.x += tangentX * jitterTan + radialX * jitterRad
+        node.y += tangentY * jitterTan + radialY * jitterRad
+        keepInCloud(node)
+      }
 
       // 绘制连接线
       const linkElements = svg.selectAll('line')
-        .data(links)
+        .data(displayLinks)
         .enter()
         .append('line')
         .attr('class', 'link')
-        .attr('x1', d => nodes[d.source].x)
-        .attr('y1', d => nodes[d.source].y)
-        .attr('x2', d => nodes[d.target].x)
-        .attr('y2', d => nodes[d.target].y)
-        .attr('stroke', 'rgba(139, 92, 246, 0.3)')
-        .attr('stroke-width', 1)
-        .attr('opacity', 0.6)
+        .attr('x1', d => nodeMap.get(d.source).x)
+        .attr('y1', d => nodeMap.get(d.source).y)
+        .attr('x2', d => nodeMap.get(d.target).x)
+        .attr('y2', d => nodeMap.get(d.target).y)
+        .attr('stroke', 'rgba(139, 92, 246, 0.16)')
+        .attr('stroke-width', 0.9)
+        .attr('opacity', 0.9)
 
       // 绘制节点
       const nodeGroups = svg.selectAll('g.node')
@@ -321,7 +591,7 @@ export default {
 
           // 高亮相关连接线 - 增强发光效果
           linkElements
-            .filter(link => link.source.id === d.id || link.target.id === d.id)
+            .filter(link => link.source === d.id || link.target === d.id)
             .attr('stroke', '#8b5cf6')
             .attr('stroke-width', 3)
             .style('filter', 'drop-shadow(0 0 12px rgba(139, 92, 246, 0.8))')
@@ -364,11 +634,15 @@ export default {
         })
         .on('click', function (event, d) {
           // 点击选择作者
-          selectedAuthor.value = d
+          selectedAuthor.value = {
+            ...d,
+            portrait: d.portrait || buildPortraitMetrics(d.id)
+          }
         })
 
-      // 创建工具提示
-      const tooltipDiv = d3.select('body').append('div')
+      // 创建工具提示（重建前先清理旧实例）
+      d3.selectAll('.network-tooltip').remove()
+      tooltipDiv = d3.select('body').append('div')
         .attr('class', 'network-tooltip')
         .style('position', 'absolute')
         .style('background', 'rgba(17, 24, 39, 0.95)')
@@ -383,64 +657,34 @@ export default {
         .style('font-size', '12px')
         .style('white-space', 'pre-line')
         .style('opacity', 0)
-
-      // 监听工具提示状态变化
-      watch(tooltip, (newTooltip) => {
-        if (newTooltip.visible) {
-          tooltipDiv
-            .style('left', newTooltip.x + 'px')
-            .style('top', newTooltip.y + 'px')
-            .text(newTooltip.text)
-            .style('opacity', 1)
-        } else {
-          tooltipDiv.style('opacity', 0)
-        }
-      }, { deep: true })
     }
 
     // 应用筛选方法
-    const applyFilters = () => {
-      // 这里可以添加实际的筛选逻辑
-      console.log('应用筛选:', {
-        startYear: startYear.value,
-        endYear: endYear.value,
-        field: selectedField.value,
-        region: selectedRegion.value
-      })
-
-      // 模拟筛选后的连接数量变化
-      const baseCount = 213
-      let filteredCount = baseCount
-
-      // 根据年份范围筛选
-      const yearRange = endYear.value - startYear.value
-      if (yearRange < 5) {
-        filteredCount = Math.floor(filteredCount * 0.6) // 年份范围小，数据量少
-      } else if (yearRange < 10) {
-        filteredCount = Math.floor(filteredCount * 0.8) // 年份范围中等
-      }
-
-      if (selectedField.value) filteredCount = Math.floor(filteredCount * 0.8)
-      if (selectedRegion.value) filteredCount = Math.floor(filteredCount * 0.7)
-
-      filteredConnectionCount.value = filteredCount
-
-      // 重新渲染网络图（这里可以添加实际的筛选逻辑）
-      renderNetworkGraph()
+    const applyFilters = async () => {
+      await fetchNetworkGraph()
     }
 
+    const goToAcademicPortrait = (author) => {
+      if (!author || !author.id) return
+      router.push({
+        name: 'AuthorDetail',
+        params: { id: author.id }
+      })
+    }
+
+    const getInitial = (name) => String(name || '?').trim().charAt(0).toUpperCase() || '?'
+
     // 开始拖拽滑块
-    const startDragging = (type) => {
+    const startDragging = (type, event) => {
+      event.preventDefault()
       isDragging.value = true
       dragType.value = type
+      const track = document.querySelector('.year-slider-track')
+      if (!track) return
 
       const handleMouseMove = (e) => {
         if (!isDragging.value) return
-
-        const slider = e.currentTarget.closest('.year-slider')
-        if (!slider) return
-
-        const rect = slider.getBoundingClientRect()
+        const rect = track.getBoundingClientRect()
         const x = e.clientX - rect.left
         const percent = Math.max(0, Math.min(100, (x / rect.width) * 100))
 
@@ -534,28 +778,37 @@ export default {
 
     // 轨道拖拽，移动整个年份范围
     const startTrackDragging = (event) => {
-      const slider = event.currentTarget
-      const rect = slider.getBoundingClientRect()
-      const x = event.clientX - rect.left
-      const percent = Math.max(0, Math.min(100, (x / rect.width) * 100))
-
+      event.preventDefault()
+      const track = event.currentTarget
+      const rect = track.getBoundingClientRect()
       const yearRange = maxYear - minYear
-      const targetYear = minYear + Math.round((percent / 100) * yearRange)
       const currentRange = endYear.value - startYear.value
+      const dragOffsetPercent = ((event.clientX - rect.left) / rect.width) * 100 - startYearPercent.value
 
-      // 计算新的起始和结束年份，保持当前范围
-      let newStartYear = Math.max(minYear, targetYear - Math.floor(currentRange / 2))
-      let newEndYear = newStartYear + currentRange
+      const handleMouseMove = (e) => {
+        const percent = ((e.clientX - rect.left) / rect.width) * 100
+        const desiredStartPercent = Math.max(0, Math.min(100, percent - dragOffsetPercent))
+        const targetYear = minYear + Math.round((desiredStartPercent / 100) * yearRange)
 
-      // 确保不超出边界
-      if (newEndYear > maxYear) {
-        newEndYear = maxYear
-        newStartYear = Math.max(minYear, newEndYear - currentRange)
+        let newStartYear = Math.max(minYear, Math.min(maxYear - currentRange, targetYear))
+        let newEndYear = newStartYear + currentRange
+        if (newEndYear > maxYear) {
+          newEndYear = maxYear
+          newStartYear = Math.max(minYear, newEndYear - currentRange)
+        }
+
+        startYear.value = newStartYear
+        endYear.value = newEndYear
+        updateYearPercentages()
       }
 
-      startYear.value = newStartYear
-      endYear.value = newEndYear
-      updateYearPercentages()
+      const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
     }
 
     return {
@@ -565,11 +818,12 @@ export default {
       startYear,
       endYear,
       selectedField,
-      selectedRegion,
       filteredConnectionCount,
       startYearPercent,
       endYearPercent,
       applyFilters,
+      goToAcademicPortrait,
+      getInitial,
       startDragging,
       updateYearPercentages,
       handleKeyDown,
@@ -638,11 +892,11 @@ export default {
 
 /* 主要内容区域 */
 .main-content {
-  max-width: 1120px;
+  max-width: 1320px;
   margin: 0 auto;
   padding: 0;
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   gap: 32px;
   align-items: start;
   margin-top: 32px;
@@ -652,7 +906,7 @@ export default {
 .network-container {
   position: relative;
   overflow: hidden;
-  height: 600px;
+  height: 760px;
   width: 100%;
 }
 
@@ -823,6 +1077,15 @@ export default {
   position: relative;
 }
 
+.field-filter-group {
+  min-width: 220px;
+  align-items: center;
+}
+
+.field-filter-group .select-wrapper {
+  width: 220px;
+}
+
 .filter-select {
   width: 140px;
   height: 32px;
@@ -835,6 +1098,11 @@ export default {
   cursor: pointer;
   appearance: none;
   transition: all 0.2s ease;
+}
+
+.field-filter-group .filter-select {
+  width: 220px;
+  text-align: center;
 }
 
 .filter-select:hover {
@@ -960,34 +1228,59 @@ export default {
   width: 80px;
   height: 80px;
   border-radius: 12px;
-  overflow: hidden;
   border: 2px solid rgba(139, 92, 246, 0.3);
-}
-
-.avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 700;
 }
 
 .profile-info {
   width: 100%;
 }
 
+.profile-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 .author-name {
   font-size: 20px;
   font-weight: 700;
   color: #ffffff;
-  margin: 0 0 16px;
+  margin: 0;
   text-align: center;
+}
+
+.more-info-link {
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  background: rgba(139, 92, 246, 0.15);
+  color: #d8c7ff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.more-info-link:hover {
+  color: #ffffff;
+  border-color: rgba(139, 92, 246, 0.75);
+  background: rgba(139, 92, 246, 0.28);
 }
 
 .info-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 8px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 10px;
 }
 
 .info-item:last-child {
@@ -1004,6 +1297,16 @@ export default {
   color: #ffffff;
   font-size: 13px;
   font-weight: 600;
+  max-width: 68%;
+  text-align: right;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.institution-value {
+  cursor: help;
 }
 
 .rankings-section {
@@ -1083,6 +1386,15 @@ export default {
     width: 120px;
   }
 
+  .field-filter-group {
+    min-width: 100%;
+  }
+
+  .field-filter-group .select-wrapper,
+  .field-filter-group .filter-select {
+    width: 100%;
+  }
+
   .filter-btn {
     margin-left: 0;
     margin-top: 8px;
@@ -1090,6 +1402,10 @@ export default {
 
   .main-content {
     padding: 24px 16px;
+  }
+
+  .network-container {
+    height: 560px;
   }
 
   .filter-bar {
