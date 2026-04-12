@@ -32,7 +32,7 @@
       </div>
     </div>
 
-    <header class="header">
+     <header class="header">
       <div class="header-container">
         <div class="logo-section">
           <div class="logo-icon">
@@ -53,12 +53,39 @@
         <div class="search-section">
           <div class="search-box">
             <i class="search-icon">🔍</i>
-            <input type="text" class="search-input" placeholder="搜索学者/论文" v-model="searchQuery" @keyup.enter="searchAuthors">
+            <input 
+              type="text" 
+              class="search-input" 
+              placeholder="搜索学者/论文" 
+              v-model="searchQuery"
+              @input="onSearchInput"
+              @keyup.enter="executeSearch"
+              @focus="showSuggestions = true"
+              @blur="handleBlur"
+            />
             <button class="clear-btn" @click="clearSearch" v-if="searchQuery">✕</button>
+            <button class="search-btn" @click="executeSearch">搜索</button>
+          </div>
+          <!-- 补全推荐下拉框 -->
+          <div v-if="showSuggestions && (suggestions.length > 0 || suggestionLoading)" class="suggestions-dropdown">
+            <div v-if="suggestionLoading" class="suggestion-loading">加载中...</div>
+            <div v-else>
+              <div 
+                v-for="author in suggestions" 
+                :key="author.id"
+                class="suggestion-item"
+                @click="selectAuthor(author)"
+              >
+                <div class="suggestion-name">{{ author.name }}</div>
+                <div class="suggestion-org">{{ truncateOrg(processOrgName(author.org)) }}</div>
+              </div>
+              <div v-if="suggestions.length === 0" class="suggestion-empty">未找到相关学者</div>
+            </div>
           </div>
         </div>
       </div>
     </header>
+
 
     <div class="carousel-section">
       <div class="carousel-container">
@@ -116,8 +143,8 @@
 </template>
 
 <script>
-// 核心修正：导入弹窗组件（请确保该文件在 src/components/ 下）
-import ScholarDetailModal from './views/AuthorDetailView.vue';
+import axios from 'axios'  // 重要：导入 axios
+import ScholarDetailModal from './views/AuthorDetailView.vue'
 
 export default {
   name: 'App',
@@ -129,6 +156,11 @@ export default {
       isModalVisible: false,
       selectedScholar: null,
       searchQuery: '',
+      // 补全推荐所需的数据
+      suggestions: [],
+      showSuggestions: false,
+      suggestionLoading: false,
+      searchDebounceTimer: null,   // 防抖定时器
       currentSlide: 0,
       previousSlide: 0,
       carouselSlides: [
@@ -144,20 +176,90 @@ export default {
   },
   beforeUnmount() {
     this.stopAutoPlay()
+    if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer)
   },
   methods: {
     openModal(scholar) {
-      this.selectedScholar = scholar;
-      this.isModalVisible = true;
+      this.selectedScholar = scholar
+      this.isModalVisible = true
     },
-    searchAuthors() {
-      if (this.searchQuery.trim()) {
-        this.$router.push(`/author/search?q=${encodeURIComponent(this.searchQuery)}`)
+    // 实时输入处理（防抖）
+    onSearchInput() {
+      if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer)
+      const query = this.searchQuery.trim()
+      if (!query) {
+        this.suggestions = []
+        this.showSuggestions = false
+        return
+      }
+      this.searchDebounceTimer = setTimeout(() => {
+        this.fetchSuggestions(query)
+      }, 300)
+    },
+    // 获取补全推荐
+    async fetchSuggestions(keyword) {
+      if (!keyword) return
+      this.suggestionLoading = true
+      try {
+        const response = await axios.get('http://localhost:8080/api/rankings/search', {
+          params: { name: keyword, page: 1, size: 5 }
+        })
+        this.suggestions = response.data || []
+        this.showSuggestions = this.suggestions.length > 0
+      } catch (err) {
+        console.error('获取补全推荐失败', err)
+        this.suggestions = []
+        this.showSuggestions = false
+      } finally {
+        this.suggestionLoading = false
+      }
+    },
+    // 选择推荐项
+    selectAuthor(author) {
+      this.searchQuery = author.name
+      this.showSuggestions = false
+      this.openModal(author)
+    },
+    // 执行搜索（点击搜索按钮或回车）
+    async executeSearch() {
+      const query = this.searchQuery.trim()
+      if (!query) return
+      this.showSuggestions = false
+      try {
+        const response = await axios.get('http://localhost:8080/api/rankings/search', {
+          params: { name: query, page: 1, size: 1 }
+        })
+        const authors = response.data
+        if (authors && authors.length > 0) {
+          this.openModal(authors[0])
+        } else {
+          alert(`未找到学者“${query}”`)
+        }
+      } catch (err) {
+        console.error('搜索失败', err)
+        alert('搜索失败，请检查网络或后端服务')
       }
     },
     clearSearch() {
       this.searchQuery = ''
+      this.suggestions = []
+      this.showSuggestions = false
     },
+    handleBlur() {
+      setTimeout(() => {
+        this.showSuggestions = false
+      }, 200)
+    },
+    // 辅助方法
+    processOrgName(org) {
+      if (!org) return '未知机构'
+      return org.replace(/^["']|["']$/g, '').trim()
+    },
+    truncateOrg(org, maxLength = 30) {
+      if (!org) return '未知机构'
+      return org.length > maxLength ? org.slice(0, maxLength) + '...' : org
+    },
+    // 轮播图方法
     nextSlide() {
       this.previousSlide = this.currentSlide
       this.currentSlide = (this.currentSlide + 1) % this.carouselSlides.length
@@ -186,7 +288,7 @@ export default {
 }
 </script>
 <style scoped>
-/* 全局样式 */
+/* 原有样式保持不变，额外添加搜索补全下拉框样式 */
 * {
   margin: 0;
   padding: 0;
@@ -420,7 +522,6 @@ export default {
   overflow: visible;
 }
 
-/* 旋转光环 */
 .logo-icon::before {
   content: '';
   position: absolute;
@@ -432,7 +533,6 @@ export default {
   z-index: -1;
 }
 
-/* 内部柔光 */
 .logo-icon::after {
   content: '';
   position: absolute;
@@ -454,8 +554,6 @@ export default {
   border: 2px solid rgba(255,255,255,0.65);
 }
 
-/* 品牌文案 */
-/* 品牌合并行样式 */
 .brand-line { display: flex; align-items: center; gap: 12px; }
 .brand-welcome {
   font-size: 18px;
@@ -473,9 +571,6 @@ export default {
   text-shadow: 0 2px 10px rgba(102,126,234,0.35);
 }
 
-/* logo与文字之间的分隔线 */
-/* 删除中间分割线，整体更简洁 */
-
 .nav-menu {
   display: flex;
   gap: 40px;
@@ -491,13 +586,11 @@ export default {
   transition: all 0.3s ease;
 }
 
-/* 悬浮与激活态颜色 */
 .nav-link:hover,
 .nav-link.router-link-exact-active {
   color: #667eea;
 }
 
-/* 下划线发亮效果 */
 .nav-link::after {
   content: '';
   position: absolute;
@@ -514,10 +607,11 @@ export default {
   width: 100%;
 }
 
-/* 搜索框 */
+/* 搜索区域 - 增加搜索按钮和下拉推荐 */
 .search-section {
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .search-box {
@@ -526,8 +620,8 @@ export default {
   align-items: center;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(100, 150, 255, 0.3);
-  border-radius: 25px;
-  padding: 8px 15px;
+  border-radius: 30px;
+  padding: 6px 12px;
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 }
@@ -538,7 +632,7 @@ export default {
 }
 
 .search-icon {
-  margin-right: 10px;
+  margin-right: 8px;
   font-size: 16px;
   color: rgba(255, 255, 255, 0.7);
 }
@@ -550,6 +644,7 @@ export default {
   color: white;
   font-size: 14px;
   width: 200px;
+  padding: 6px 0;
 }
 
 .search-input::placeholder {
@@ -561,14 +656,84 @@ export default {
   border: none;
   color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
-  padding: 5px;
+  padding: 0 6px;
   border-radius: 50%;
   transition: all 0.3s ease;
+  font-size: 14px;
 }
 
 .clear-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: white;
+}
+
+.search-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.search-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+}
+
+/* 补全下拉框 */
+.suggestions-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  background: rgba(20, 20, 50, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(100, 150, 255, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  z-index: 1100;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.suggestion-loading,
+.suggestion-empty {
+  padding: 12px 16px;
+  text-align: center;
+  color: rgba(255,255,255,0.6);
+  font-size: 13px;
+}
+
+.suggestion-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.suggestion-item:hover {
+  background: rgba(100, 150, 255, 0.2);
+}
+
+.suggestion-name {
+  font-weight: 500;
+  color: white;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.suggestion-org {
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 轮播图区域 */
@@ -661,7 +826,6 @@ export default {
   text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
 }
 
-/* 轮播图指示器 */
 .carousel-indicators {
   position: absolute;
   bottom: 20px;
@@ -691,7 +855,6 @@ export default {
   background: rgba(255, 255, 255, 0.7);
 }
 
-/* 轮播图控制按钮 */
 .carousel-btn {
   position: absolute;
   top: 50%;
@@ -722,7 +885,6 @@ export default {
   right: 20px;
 }
 
-/* 主内容区域 */
 .main-content {
   margin-top: 40px;
   min-height: calc(100vh - 100px);
@@ -730,7 +892,6 @@ export default {
   z-index: 2;
 }
 
-/* 底部波浪 */
 .footer-wave {
   position: relative;
   margin-top: 100px;
@@ -742,7 +903,6 @@ export default {
   display: block;
 }
 
-/* 底部 */
 .footer {
   background: rgba(15, 12, 41, 0.95);
   backdrop-filter: blur(20px);
@@ -806,97 +966,95 @@ export default {
   font-size: 14px;
 }
 
-/* 响应式设计 */
+/* 响应式 */
+@media (max-width: 1024px) {
+  .header-container {
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  .suggestions-dropdown {
+    width: 280px;
+    right: auto;
+    left: 0;
+  }
+}
 @media (max-width: 768px) {
   .header-container {
     flex-direction: column;
     gap: 20px;
     padding: 0 20px;
   }
-  
   .nav-menu {
     gap: 20px;
   }
-  
   .search-input {
     width: 150px;
   }
-  
+  .suggestions-dropdown {
+    width: 260px;
+  }
   .fingerprint-panel {
     width: 250px;
     height: 250px;
   }
-  
   .fingerprint-graphic {
     width: 150px;
     height: 150px;
   }
-  
-  /* 轮播图响应式 */
   .carousel-section {
     padding: 20px 0;
   }
-  
   .carousel-container {
     margin: 0 20px;
   }
-  
   .carousel-slide {
     height: 250px;
   }
-  
   .slide-content {
     padding: 0 30px;
     flex-direction: column;
     text-align: center;
   }
-  
   .slide-image {
     flex: 0 0 120px;
     height: 120px;
     margin-right: 0;
     margin-bottom: 20px;
   }
-  
   .slide-title {
     font-size: 28px;
   }
-  
   .slide-description {
     font-size: 16px;
   }
-  
   .carousel-btn {
     width: 40px;
     height: 40px;
     font-size: 20px;
   }
-  
   .prev-btn {
     left: 10px;
   }
-  
   .next-btn {
     right: 10px;
   }
 }
-
 @media (max-width: 480px) {
   .nav-menu {
     flex-wrap: wrap;
     justify-content: center;
     gap: 15px;
   }
-  
   .search-input {
     width: 120px;
   }
-  
+  .suggestions-dropdown {
+    width: 240px;
+  }
   .fingerprint-panel {
     width: 200px;
     height: 200px;
   }
-  
   .fingerprint-graphic {
     width: 120px;
     height: 120px;

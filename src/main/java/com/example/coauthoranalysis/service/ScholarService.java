@@ -17,7 +17,7 @@ public class ScholarService {
     @PostConstruct
 public void init() {
     // 尝试使用绝对路径，排除“相对路径到底在哪”的干扰
-    String path = "E:\\hezhu\\Luminary-Nav-1\\frontend\\frontend\\src\\assets\\data\\scholars.json";
+   String path = "frontend/frontend/src/assets/data/scholars.json";
     File file = new File(path);
     
     System.out.println("--- 数据加载调试开始 ---");

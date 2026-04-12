@@ -1,102 +1,14 @@
 <template>
   <div class="rankings-view">
-    <!-- 英雄区域 -->
-    <section class="hero-section">
+     <!-- 英雄区域 - 仅保留标题和副标题 -->
+     <section class="hero-section">
       <div class="hero-content">
         <div class="hero-main">
           <h1 class="hero-title">学术榜单</h1>
           <p class="hero-subtitle">发现卓越科研力量，展现学术成就风采</p>
         </div>
-        
-        <!-- 右侧筛选设置栏 -->
-        <div class="hero-filter-bar">
-          <!-- 年份筛选 -->
-          <div class="filter-group">
-            <div class="year-range">
-              <div class="year-slider">
-                <!-- 时间轴标签 -->
-                <div class="year-labels">
-                  <span class="year-label">{{ startYear }}</span>
-                  <span class="year-label">{{ new Date().getFullYear() }}</span>
-                </div>
-                
-                <div class="year-slider-track" @mousedown="startTrackDragging">
-                  <div class="year-slider-fill" :style="{ left: startYearPercent + '%', right: (100 - endYearPercent) + '%' }"></div>
-                  <div 
-                    class="year-slider-thumb start" 
-                    :style="{ left: startYearPercent + '%' }"
-                    @mousedown.stop="startDragging('start')"
-                    @keydown="handleKeyDown('start', $event)"
-                    tabindex="0"
-                    role="slider"
-                    :aria-valuenow="startYear"
-                    :aria-valuemin="minYear"
-                    :aria-valuemax="endYear - 1"
-                    aria-label="起始年份"
-                  ></div>
-                  <div 
-                    class="year-slider-thumb end" 
-                    :style="{ left: endYearPercent + '%' }"
-                    @mousedown.stop="startDragging('end')"
-                    @keydown="handleKeyDown('end', $event)"
-                    tabindex="0"
-                    role="slider"
-                    :aria-valuenow="endYear"
-                    :aria-valuemin="startYear + 1"
-                    :aria-valuemax="maxYear"
-                    aria-label="结束年份"
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- 领域设置 -->
-          <div class="filter-group">
-  <input 
-    type="text" 
-    v-model="searchName" 
-    placeholder="搜索学者姓名..." 
-    class="filter-input"
-  />
-</div>
-
-<div class="filter-group">
-  <input 
-    type="text" 
-    v-model="searchOrg" 
-    placeholder="按机构筛选..." 
-    class="filter-input"
-  />
-</div>
-          
-          <!-- 地域范围设置 -->
-          <div class="filter-group">
-            <div class="select-wrapper">
-              <select class="filter-select" v-model="selectedRegion">
-                <option value="">全部地域</option>
-                <option value="china">中国</option>
-                <option value="north-america">北美</option>
-                <option value="europe">欧洲</option>
-                <option value="asia-pacific">亚太</option>
-                <option value="other">其他</option>
-              </select>
-            </div>
-          </div>
-          
-          <!-- 数据点总数显示 -->
-          <div class="data-count">
-            <span class="count-number">{{ filteredCount }}</span>
-          </div>
-          
-          <!-- 筛选按钮 -->
-          <button class="filter-btn" @click="applyFilters">
-            筛选
-          </button>
-        </div>
       </div>
     </section>
-
     <!-- 主要内容区域 -->
     <div class="main-content">
       <!-- 榜单网格 -->
@@ -524,45 +436,64 @@ const applyFilters = async () => {
 .rankings-view {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f0f23 0%, #1e1b4b 50%, #312e81 100%);
-  padding: 20px 16px 56px;
+  padding: 20px 0 56px; /* 左右内边距交给内部容器统一控制 */
   color: #ffffff;
 }
 
-/* 英雄区域 */
+/* 英雄区域 - 完全左对齐，与主内容左右边距一致 */
 .hero-section {
-  padding: 40px 0;
-  position: relative;
+  padding: 40px 0 20px;
 }
 
 .hero-content {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 40px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 40px; /* 与 .main-content 的左右内边距保持一致 */
 }
 
 .hero-main {
-  flex: 1;
+  text-align: left;
 }
 
 .hero-title {
-  font-size: 36px;
-  font-weight: 700;
-  color: #ffffff;
+  font-size: 48px;
+  font-weight: 800;
   margin: 0 0 16px;
   letter-spacing: -0.02em;
   line-height: 1.2;
+  background: linear-gradient(135deg, #ffffff, #c084fc, #a78bfa, #8b5cf6);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradientShift 6s ease infinite;
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .hero-subtitle {
   font-size: 18px;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
   line-height: 1.5;
-  font-weight: 400;
+  font-weight: 500;
+  text-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
+  letter-spacing: 0.3px;
+  border-left: 3px solid #a78bfa;
+  padding-left: 16px;
+  display: inline-block;
+  margin-left: 0; /* 确保无额外左偏移 */
 }
 
 /* 主要内容区域 */
@@ -571,199 +502,6 @@ const applyFilters = async () => {
   margin: 0 auto;
   padding: 0 40px;
   margin-top: 32px;
-}
-
-/* 英雄区域筛选栏 */
-.hero-filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  flex-wrap: wrap;
-  min-width: 600px;
-  padding: 16px;
-  position: relative;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 140px;
-  padding: 0 16px;
-  position: relative;
-}
-
-/* 年份滑块样式 */
-.year-range {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.year-slider {
-  position: relative;
-  width: 200px;
-}
-
-/* 时间轴标签 */
-.year-labels {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.year-label {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.year-slider-track {
-  position: relative;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-  cursor: grab;
-  transition: background 0.2s ease;
-}
-
-.year-slider-track:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.year-slider-track:active {
-  cursor: grabbing;
-}
-
-.year-slider-fill {
-  position: absolute;
-  height: 100%;
-  background: rgba(139, 92, 246, 0.6);
-  border-radius: 2px;
-  transition: all 0.3s ease;
-}
-
-.year-slider-thumb {
-  position: absolute;
-  top: 50%;
-  width: 16px;
-  height: 16px;
-  background: #ffffff;
-  border: 2px solid #8b5cf6;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.year-slider-thumb:hover {
-  transform: translate(-50%, -50%) scale(1.1);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
-}
-
-.year-slider-thumb:focus {
-  outline: 2px solid rgba(139, 92, 246, 0.8);
-  outline-offset: 2px;
-  transform: translate(-50%, -50%) scale(1.1);
-  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.6);
-}
-
-/* 选择框样式 */
-.select-wrapper {
-  position: relative;
-}
-
-.filter-select {
-  width: 140px;
-  height: 32px;
-  padding: 0 12px;
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 13px;
-  text-align: center;
-  cursor: pointer;
-  appearance: none;
-  transition: all 0.2s ease;
-}
-
-.filter-select:hover {
-  color: #ffffff;
-}
-
-.filter-select:focus {
-  outline: none;
-  color: #ffffff;
-}
-
-.filter-select option {
-  background: #1e1b4b;
-  color: #ffffff;
-  padding: 8px;
-}
-
-/* 筛选按钮 */
-.filter-btn {
-  height: 36px;
-  padding: 0 20px;
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-left: 8px;
-}
-
-.filter-btn:hover {
-  color: #ffffff;
-  transform: translateY(-1px);
-}/* 在 RankingsView.vue 的 <style scoped> 中添加 */
-.filter-input {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: white;
-  padding: 8px 16px;
-  outline: none;
-  transition: all 0.3s ease;
-  width: 180px;
-}
-
-.filter-input:focus {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: #8b5cf6; /* 紫色边框，呼应主题色 */
-  box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
-}
-
-.filter-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
-}
-/* 数据点总数显示 */
-.data-count {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  transition: all 0.2s ease;
-  margin: 0 16px;
-  position: relative;
-}
-
-.data-count:hover {
-  transform: scale(1.05);
-}
-
-.count-number {
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 700;
-  text-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
 }
 
 /* 榜单网格 */
@@ -961,26 +699,6 @@ const applyFilters = async () => {
   color: #fbbf24;
 }
 
-.placeholder-list {
-  opacity: 0.5;
-}
-
-.placeholder-item {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.placeholder-item .name,
-.placeholder-item .org,
-.placeholder-item .label,
-.placeholder-item .value {
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.placeholder-item .papers i,
-.placeholder-item .score i {
-  color: rgba(255, 255, 255, 0.3);
-}
-
 .loading, .error-message {
   text-align: center;
   padding: 40px 0;
@@ -998,51 +716,16 @@ const applyFilters = async () => {
     grid-template-columns: 1fr 1fr;
   }
   
-  .hero-content {
-    flex-direction: column;
-    gap: 24px;
-    text-align: center;
-  }
-  
-  .hero-main {
-    text-align: center;
-  }
-  
   .hero-title {
-    font-size: 28px;
+    font-size: 36px;
   }
   
   .hero-subtitle {
     font-size: 16px;
   }
-  
-  .hero-filter-bar {
-    min-width: 100%;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    padding: 12px;
-  }
-  
-  .filter-group {
-    padding: 0 12px;
-  }
-  
-  .year-slider {
-    width: 100%;
-  }
-  
-  .year-labels {
-    font-size: 10px;
-  }
-  
-  .filter-select {
-    width: 120px;
-  }
-  
-  .filter-btn {
-    margin-left: 0;
-    margin-top: 8px;
+
+  .hero-content, .main-content {
+    padding: 0 24px;
   }
 }
 
@@ -1061,6 +744,14 @@ const applyFilters = async () => {
 
   .label {
     font-size: 11px;
+  }
+
+  .hero-title {
+    font-size: 32px;
+  }
+
+  .hero-content, .main-content {
+    padding: 0 20px;
   }
 }
 </style>
