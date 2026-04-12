@@ -17,7 +17,11 @@ public class ScholarService {
     @PostConstruct
 public void init() {
     // 尝试使用绝对路径，排除“相对路径到底在哪”的干扰
+<<<<<<< HEAD
    String path = "frontend/frontend/src/assets/data/scholars.json";
+=======
+    String path = "frontend/frontend/src/assets/data/scholars.json";
+>>>>>>> cb0e577e8ad30a50d3b42195b2972bf30473f0ec
     File file = new File(path);
     
     System.out.println("--- 数据加载调试开始 ---");
