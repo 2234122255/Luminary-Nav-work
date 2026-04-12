@@ -23,7 +23,7 @@ Luminary-Nav leverages the **Aliyun Bailian API** and interactive network visual
 ## 🔄 Updates
 - **[Apr 2026] AI Scholar Assistant:** Integrated an intelligent conversational agent based on the Aliyun Bailian standard API. Users can now query co-authorship relationships dynamically and generate downloadable, stylized Scholar Business Cards.
 - **[Apr 2026] Academic Hotspots Integration:** The homepage carousel now directly syncs with the "黄大年茶思屋" academic hotspots, keeping the platform updated with the latest technological trends.
-- **[Aug 2025] Full-stack Overhaul:** Complete redesign of the frontend UI featuring a modern dark-tech aesthetic, along with a robust Spring Boot backend tailored for large-scale scholar data aggregation.
+- **[Mar 2026] Full-stack Overhaul:** Complete redesign of the frontend UI featuring a modern dark-tech aesthetic, along with a robust Spring Boot backend tailored for large-scale scholar data aggregation.
 
 ## 🎯 Milestones
 
@@ -45,44 +45,47 @@ Luminary-Nav adopts an efficient, multi-tiered architecture that separates compu
 - **AI-Powered Insights:** Features an embedded AI Copilot that can instantly compile a scholar's stats into an elegantly designed, downloadable business card using real-world data.
 - **Dynamic Hotspot Tracking:** Curates a stream of academic advancements, bridging the gap between cutting-edge research and practical tracking.
 
+以下是为您精准翻译的英文版本，已严格保留原有 Markdown 结构、代码块格式与技术细节，并补全了遗漏的代码块闭合符号，符合国际开源项目规范：
+
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js 18.x or higher
 - Java 17 or higher
 - Maven 3.6+
-- Valid **Aliyun Bailian API Key** (required for AI chat)
+- Valid **Aliyun Bailian API Key** (required for AI chat features)
 
-### 1. Backend (Spring Boot)
-The backend is located in the `main` branch root. It uses an embedded database (H2/SQLite) for rapid prototyping.
-
+### Repository Setup
 ```bash
 # Clone the repository (main branch)
-git clone https://github.com/your-repo/Luminary-Nav.git
-cd Luminary-Nav
+git clone https://github.com/your-repo/Luminary-Nav-work.git
+```
 
-# Set up your AI API Key
-export BAILIAN_API_KEY="sk-your-actual-api-key-here"
+### Frontend
+Navigate to the frontend directory and start the development server.
+```bash
+# Navigate to the frontend directory
+cd frontend
 
-# Build and run the backend
+# Start the dev server
+npm run dev
+```
+
+### Backend (Spring Boot)
+The backend code resides in the root directory of the `main` branch. For rapid prototyping, it defaults to an embedded database (H2/SQLite).
+
+```bash
+# Navigate to the project root
+cd Luminary-Nav-work
+
+# Set the AI API Key in terminal (Required for AI chat, supported by Aliyun Bailian)
+# Note: Use `export BAILIAN_API_KEY="..."` on macOS/Linux
+$env:BAILIAN_API_KEY="sk-XXXXXXXXXXXXXXXXXXXX"
+
+# Build and start the backend service
 ./mvnw clean install -DskipTests
 ./mvnw spring-boot:run
 ```
-*The backend server will start on `http://localhost:8080`.*
-
-### 2. Frontend (Vue 3 + Vite)
-The frontend code resides in the `frontend` directory.
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start the development server
-npm run dev
-```
-*The frontend will be available at `http://localhost:5173`.*
 
 ## 🤝 Contributing
 We welcome contributions from the community! Please read our `CONTRIBUTING.md` before submitting pull requests.
