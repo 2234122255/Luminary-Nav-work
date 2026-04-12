@@ -85,6 +85,25 @@
           <div class="ai-chat-icon" @click="toggleAiChat" title="AI学术助手">
             <span class="icon">🤖</span>
           </div>
+          <router-link
+            v-if="!isUserLoggedIn && $route.path !== '/login' && $route.path !== '/register'"
+            to="/login"
+            class="auth-btn"
+          >
+            立即登录
+          </router-link>
+          <div
+            v-else-if="isUserLoggedIn && $route.path !== '/login' && $route.path !== '/register'"
+            class="user-menu-wrap"
+            ref="userMenuWrap"
+          >
+            <div class="user-avatar" title="User" role="button" tabindex="0" @click.stop="toggleUserMenu">
+              U
+            </div>
+            <div v-if="userMenuOpen" class="user-menu" @click.stop>
+              <button class="user-menu-item" type="button" @click="logout">退出登录</button>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -164,6 +183,8 @@ export default {
       isModalVisible: false,
       isAiChatVisible: false,
       selectedScholar: null,
+      auth: null,
+      userMenuOpen: false,
       searchQuery: '',
       // 补全推荐所需的数据
       suggestions: [],
@@ -195,13 +216,46 @@ export default {
     }
   },
   mounted() {
+    this.syncAuthFromStorage()
+    this._authListener = () => this.syncAuthFromStorage()
+    window.addEventListener('luminary-auth-change', this._authListener)
+    this._docClickListener = (event) => {
+      const wrap = this.$refs.userMenuWrap
+      if (wrap && !wrap.contains(event.target)) this.userMenuOpen = false
+    }
+    document.addEventListener('click', this._docClickListener)
     this.startAutoPlay()
   },
   beforeUnmount() {
     this.stopAutoPlay()
     if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer)
+    if (this._authListener) window.removeEventListener('luminary-auth-change', this._authListener)
+    if (this._docClickListener) document.removeEventListener('click', this._docClickListener)
+  },
+  computed: {
+    isUserLoggedIn() {
+      return this.auth?.role === 'user'
+    }
   },
   methods: {
+    syncAuthFromStorage() {
+      try {
+        const auth = JSON.parse(localStorage.getItem('luminaryAuth') || 'null')
+        this.auth = auth && typeof auth === 'object' ? auth : null
+      } catch {
+        this.auth = null
+        localStorage.removeItem('luminaryAuth')
+      }
+    },
+    toggleUserMenu() {
+      this.userMenuOpen = !this.userMenuOpen
+    },
+    logout() {
+      localStorage.removeItem('luminaryAuth')
+      window.dispatchEvent(new Event('luminary-auth-change'))
+      this.userMenuOpen = false
+      if (this.$route.path !== '/') this.$router.push('/')
+    },
     toggleAiChat() {
       this.isAiChatVisible = !this.isAiChatVisible;
     },
@@ -784,6 +838,92 @@ export default {
   transition: transform 0.2s, box-shadow 0.2s;
   box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
   margin-left: 15px;
+}
+
+.auth-btn {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border-radius: 999px;
+  margin-left: 12px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid rgba(100, 150, 255, 0.35);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.55), rgba(118, 75, 162, 0.5));
+  box-shadow: 0 10px 22px rgba(102, 126, 234, 0.22);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.auth-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(102, 126, 234, 0.75);
+  box-shadow: 0 14px 26px rgba(102, 126, 234, 0.32);
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  margin-left: 12px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(100, 150, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
+  color: rgba(209, 213, 219, 0.9);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  user-select: none;
+}
+
+.user-menu-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.user-avatar {
+  cursor: pointer;
+}
+
+.user-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  min-width: 140px;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(15, 12, 41, 0.92);
+  border: 1px solid rgba(100, 150, 255, 0.22);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(18px);
+  z-index: 50;
+}
+
+.user-menu-item {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, border-color 0.2s;
+  border: 1px solid rgba(100, 150, 255, 0.18);
+}
+
+.user-menu-item:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.35), rgba(118, 75, 162, 0.32));
+  transform: translateY(-1px);
+  border-color: rgba(102, 126, 234, 0.55);
 }
 
 .ai-chat-icon:hover {

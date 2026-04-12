@@ -69,118 +69,81 @@
       </div>
     </section>
 
-    <!-- Carousel -->
-    <section class="card carousel-section">
-      <div class="section-header">
-        <div class="title-wrap">
-          <span class="icon">★</span>
-          <h2>精选推荐</h2>
-          <small class="muted">为你精选的优质学者与机构</small>
-        </div>
-        <div class="tools">
-          <button class="tool" @click="prevSlide">上一条</button>
-          <button class="tool" @click="nextSlide">下一条</button>
-        </div>
-      </div>
-      <div class="card-body">
-        <div v-if="loadingCarousel" class="skeleton skeleton-carousel"></div>
-        <div
-          v-else
-          class="carousel"
-          @mouseenter="pauseAutoPlay"
-          @mouseleave="startAutoPlay"
-          @touchstart="onTouchStart"
-          @touchmove="onTouchMove"
-          @touchend="onTouchEnd"
-        >
-          <div class="track" :style="{ transform: `translateX(-${currentIndex * 100}%)` }">
-            <div
-              v-for="(item, index) in carouselItems"
-              :key="item.id"
-              class="slide"
-              @click="goTo(item.linkUrl)"
-            >
-              <div class="media" :style="{ backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : gradientFor(index) }"></div>
-              <div class="slide-content">
-                <div class="title">{{ item.title }}</div>
-                <div class="subtitle">{{ item.subtitle || '—' }}</div>
-                <div class="meta">综合评分：{{ formatScore(item.score) }}</div>
-              </div>
-            </div>
-          </div>
-          <div class="dots">
-            <span
-              v-for="(it, idx) in carouselItems"
-              :key="it.id + '-dot'"
-              class="dot"
-              :class="{ active: idx === currentIndex }"
-              @click="currentIndex = idx"
-            />
-          </div>
-        </div>
-        <div v-if="!loadingCarousel && !carouselItems.length" class="empty">暂无推荐</div>
-      </div>
-    </section>
-
   </div>
   
 </template>
 
 <script>
-import axios from 'axios'
 import * as d3 from 'd3'
 import cloud from 'd3-cloud'
 
-
 export default {
   name: 'HomeView',
-
   data() {
     return {
       cloudWords: [],
-      carouselItems: [],
-      currentIndex: 0,
-      intervalId: null,
       loadingCloud: false,
-      loadingCarousel: false,
-      tooltip: { visible: false, text: '', value: 0, x: 0, y: 0 },
-      touchStartX: 0,
-      touchDeltaX: 0
+      tooltip: { visible: false, text: '', value: 0, x: 0, y: 0 }
     }
   },
   mounted() {
     this.fetchWordCloud()
-    this.fetchCarousel()
     window.addEventListener('resize', this.onResize, { passive: true })
   },
   beforeUnmount() {
-    if (this.intervalId) clearInterval(this.intervalId)
     window.removeEventListener('resize', this.onResize)
   },
   methods: {
     async fetchWordCloud() {
       try {
         this.loadingCloud = true
-        const { data } = await axios.get('/api/home/word-cloud')
-        this.cloudWords = Array.isArray(data) ? data : []
+        this.cloudWords = this.buildAiWordCloudData()
         this.$nextTick(() => this.renderWordCloud())
       } catch (e) {
-        console.error('加载词云失败', e)
+        console.error('Failed to load word cloud', e)
       } finally {
         this.loadingCloud = false
       }
     },
-    async fetchCarousel() {
-      try {
-        this.loadingCarousel = true
-        const { data } = await axios.get('/api/home/carousel')
-        this.carouselItems = Array.isArray(data) ? data : []
-        this.startAutoPlay()
-      } catch (e) {
-        console.error('加载轮播失败', e)
-      } finally {
-        this.loadingCarousel = false
-      }
+    buildAiWordCloudData() {
+      const baseWords = [
+        ['Large Language Models', 100], ['Generative AI', 98], ['Transformer', 96], ['Prompt Engineering', 94],
+        ['Reasoning Models', 92], ['Agentic AI', 91], ['AI Agents', 90], ['Retrieval-Augmented Generation', 89],
+        ['Fine-Tuning', 88], ['Diffusion Models', 87], ['Multimodal Learning', 86], ['Neural Networks', 85],
+        ['Computer Vision', 84], ['Natural Language Processing', 83], ['Reinforcement Learning', 82], ['Embeddings', 81],
+        ['Vector Database', 80], ['Knowledge Graph', 79], ['Inference Optimization', 78], ['Model Distillation', 77],
+        ['Quantization', 76], ['Low-Rank Adaptation', 75], ['Alignment', 74], ['AI Safety', 73],
+        ['Responsible AI', 72], ['Self-Supervised Learning', 71], ['Contrastive Learning', 70], ['Graph Neural Networks', 69],
+        ['Federated Learning', 68], ['Edge AI', 67], ['Synthetic Data', 66], ['Tokenization', 65],
+        ['Attention Mechanism', 64], ['Chain-of-Thought', 63], ['Tool Calling', 62], ['Function Calling', 61],
+        ['Model Context Protocol', 60], ['Long Context', 59], ['Context Window', 58], ['Hallucination Mitigation', 57],
+        ['Few-Shot Learning', 56], ['Zero-Shot Learning', 55], ['Instruction Tuning', 54], ['Vision-Language Model', 53],
+        ['Speech Recognition', 52], ['Text-to-Image', 51], ['Text-to-Video', 50], ['Image Segmentation', 49],
+        ['Object Detection', 48], ['Semantic Search', 47], ['Hybrid Search', 46], ['Reranking', 45],
+        ['Model Evaluation', 44], ['Benchmarking', 43], ['MLOps', 42], ['AIOps', 41],
+        ['Model Serving', 40], ['Latency Optimization', 39], ['Prompt Caching', 38], ['Guardrails', 37],
+        ['Policy Learning', 36], ['Reward Modeling', 35], ['Curriculum Learning', 34], ['Transfer Learning', 33],
+        ['Meta Learning', 32], ['Continual Learning', 31], ['Active Learning', 30], ['Bayesian Optimization', 29],
+        ['AutoML', 28], ['Hyperparameter Tuning', 27], ['Pruning', 26], ['Sparsity', 25],
+        ['Anomaly Detection', 24], ['Time Series Forecasting', 23], ['Tabular Learning', 22], ['Speech Synthesis', 21],
+
+        // More low-weight AI terms to increase density and size contrast
+        ['Parameter-Efficient Fine-Tuning', 20], ['Prompt Templates', 20], ['Instruction Following', 19], ['Safety Tuning', 19],
+        ['Data Curation', 19], ['Data Augmentation', 18], ['Model Monitoring', 18], ['Drift Detection', 18],
+        ['Calibration', 18], ['Uncertainty Estimation', 17], ['Robustness', 17], ['Adversarial Attacks', 17],
+        ['Adversarial Training', 17], ['Bias Mitigation', 17], ['Privacy-Preserving ML', 16], ['Differential Privacy', 16],
+        ['Secure Inference', 16], ['Model Watermarking', 16], ['Content Moderation', 16], ['Evaluation Harness', 16],
+        ['Prompt Injection', 16], ['Jailbreak Defense', 16], ['Red Teaming', 16], ['System Prompting', 16],
+        ['Toolformer', 16], ['Planning', 16], ['Task Decomposition', 16], ['Memory Augmentation', 16],
+        ['Semantic Chunking', 16], ['Context Compression', 16], ['Streaming Inference', 16], ['Batching', 16],
+        ['KV Cache', 16], ['Speculative Decoding', 16], ['Beam Search', 16], ['Temperature Sampling', 16],
+        ['Top-p Sampling', 16], ['Top-k Sampling', 16], ['Logit Bias', 16], ['Stop Sequences', 16]
+      ]
+
+      return baseWords.map(([text, value]) => ({
+        text,
+        value: Math.max(10, value + Math.round((Math.random() - 0.5) * 6))
+      }))
     },
     renderWordCloud() {
       const container = this.$refs.cloudContainer
@@ -188,21 +151,30 @@ export default {
 
       const width = container.clientWidth || 600
       const height = 360
-
       container.innerHTML = ''
 
       const values = this.cloudWords.map(w => w.value || 0)
       const maxVal = d3.max(values) || 1
       const minVal = d3.min(values) || 0
 
-      const fontSize = d3.scaleSqrt().domain([minVal, maxVal]).range([14, 52])
-      const color = d3.scaleOrdinal(d3.schemeTableau10)
+      // Stronger separation between high/low weights
+      const fontSize = d3
+        .scalePow()
+        .exponent(1.6)
+        .domain([minVal, maxVal])
+        .range([10, 64])
+      const color = d3.scaleOrdinal([
+        // Lighter purples + soft pinks to stay readable on dark-purple background
+        '#f5d0fe', '#f0abfc', '#e9d5ff', '#ddd6fe', '#c4b5fd',
+        '#a78bfa', '#8b5cf6', '#c084fc', '#d8b4fe', '#fae8ff'
+      ])
 
       const layout = cloud()
         .size([width, height])
-        .words(this.cloudWords.map(d => ({ text: d.text, size: fontSize(d.value || 0) })))
-        .padding(4)
-        .rotate(() => (Math.random() > 0.8 ? 90 : 0))
+        .words(this.cloudWords.map(d => ({ text: d.text, value: d.value || 0, size: fontSize(d.value || 0) })))
+        .padding(2)
+        .rotate(() => (Math.random() > 0.65 ? 90 : 0))
+        .spiral('rectangular')
         .font('Impact')
         .fontSize(d => d.size)
         .on('end', draw)
@@ -227,6 +199,11 @@ export default {
           .style('font-family', 'Impact')
           .style('font-size', d => `${d.size}px`)
           .style('fill', (_, i) => color(i))
+          .style('text-shadow', '0 0 8px rgba(124, 58, 237, 0.35)')
+          // Always-on outline for readability against a dark background
+          .style('paint-order', 'stroke')
+          .style('stroke', 'rgba(237, 233, 254, 0.38)')
+          .style('stroke-width', '0.9px')
           .attr('text-anchor', 'middle')
           .attr('transform', d => `translate(${d.x},${d.y})rotate(${d.rotate})`)
           .style('cursor', 'pointer')
@@ -234,69 +211,34 @@ export default {
           .on('click', (event, d) => {
             vm.$router.push({ name: 'AuthorSearch', query: { q: d.text } })
           })
-          .on('mouseover', (event, d) => {
-            vm.tooltip = { visible: true, text: d.text, value: d.size, x: event.offsetX + 12, y: event.offsetY + 12 }
+          .on('mouseover', function (event, d) {
+            d3.select(this)
+              .style('stroke', 'rgba(245, 208, 254, 0.95)')
+              .style('stroke-width', '1.3px')
+              .style('filter', 'drop-shadow(0 0 10px rgba(167, 139, 250, 0.95)) drop-shadow(0 0 18px rgba(124, 58, 237, 0.75))')
+
+            vm.tooltip = { visible: true, text: d.text, value: d.value, x: event.offsetX + 12, y: event.offsetY + 12 }
           })
-          .on('mousemove', (event, d) => {
+          .on('mousemove', (event) => {
             vm.tooltip.x = event.offsetX + 12
             vm.tooltip.y = event.offsetY + 12
           })
-          .on('mouseout', () => {
+          .on('mouseout', function () {
+            d3.select(this)
+              .style('stroke', 'rgba(237, 233, 254, 0.38)')
+              .style('stroke-width', '0.9px')
+              .style('filter', null)
             vm.tooltip.visible = false
           })
       }
     },
     onResize() {
-      // 简单防抖
       clearTimeout(this._resizeTid)
       this._resizeTid = setTimeout(() => this.renderWordCloud(), 200)
-    },
-    startAutoPlay() {
-      if (this.intervalId) clearInterval(this.intervalId)
-      if (this.carouselItems.length <= 1) return
-      this.intervalId = setInterval(this.nextSlide, 3500)
-    },
-    pauseAutoPlay() {
-      if (this.intervalId) clearInterval(this.intervalId)
-    },
-    nextSlide() {
-      this.currentIndex = (this.currentIndex + 1) % this.carouselItems.length
-    },
-    prevSlide() {
-      this.currentIndex = (this.currentIndex - 1 + this.carouselItems.length) % this.carouselItems.length
-    },
-    goTo(path) {
-      if (!path) return
-      this.$router.push(path)
     },
     formatScore(s) {
       if (s == null) return '-'
       return Number(s).toFixed(2)
-    },
-    gradientFor(i) {
-      const colors = [
-        ['#6366F1', '#22D3EE'],
-        ['#F59E0B', '#EF4444'],
-        ['#10B981', '#06B6D4'],
-        ['#8B5CF6', '#EC4899'],
-        ['#0EA5E9', '#14B8A6']
-      ]
-      const [a, b] = colors[i % colors.length]
-      return `linear-gradient(135deg, ${a}, ${b})`
-    },
-    onTouchStart(e) {
-      this.touchStartX = e.touches[0].clientX
-      this.touchDeltaX = 0
-      this.pauseAutoPlay()
-    },
-    onTouchMove(e) {
-      this.touchDeltaX = e.touches[0].clientX - this.touchStartX
-    },
-    onTouchEnd() {
-      const threshold = 40
-      if (this.touchDeltaX > threshold) this.prevSlide()
-      if (this.touchDeltaX < -threshold) this.nextSlide()
-      this.startAutoPlay()
     }
   }
 }
@@ -428,79 +370,6 @@ export default {
 .cloud-tooltip .tt-title { font-weight: 600; }
 .cloud-tooltip .tt-sub { color:#94a3b8; margin-top: 2px; }
 
-/* Carousel */
-.carousel { position: relative; overflow: hidden; }
-.track { display: flex; transition: transform .45s ease; }
-.slide { 
-  min-width: 100%; 
-  display: grid; 
-  grid-template-columns: 280px 1fr; 
-  gap: 24px; 
-  align-items: center; 
-  cursor: pointer;
-  padding: 8px;
-}
-
-.slide:hover {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 12px;
-}
-
-.media { 
-  width: 100%; 
-  height: 160px; 
-  border-radius: 12px; 
-  background-size: cover; 
-  background-position: center; 
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.slide-content .title { 
-  font-size: 22px; 
-  font-weight: 700; 
-  color: #ffffff;
-  margin-bottom: 8px;
-  letter-spacing: -0.01em;
-}
-
-.slide-content .subtitle { 
-  color: rgba(255, 255, 255, 0.7); 
-  margin-bottom: 12px;
-  font-size: 15px;
-}
-
-.slide-content .meta { 
-  color: rgba(255, 255, 255, 0.6); 
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.dots { 
-  display: flex; 
-  gap: 10px; 
-  justify-content: center; 
-  padding-top: 16px;
-}
-
-.dot { 
-  width: 8px; 
-  height: 8px; 
-  background: rgba(255, 255, 255, 0.3); 
-  border-radius: 999px; 
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dot.active { 
-  background: #a855f7; 
-  width: 24px;
-  box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
-}
-
-.dot:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
 
 /* Empty & Skeleton */
 .empty { 
@@ -519,14 +388,10 @@ export default {
 }
 .skeleton::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent); animation: shimmer 1.2s infinite; }
 .skeleton-cloud { height: 360px; }
-.skeleton-carousel { height: 200px; }
 @keyframes shimmer { 100% { transform: translateX(100%); } }
 
 @media (max-width: 820px) {
-  .slide { grid-template-columns: 1fr; }
-  .media { height: 140px; }
-  
-  .section-header {
+.section-header {
     padding: 16px 20px;
   }
   
