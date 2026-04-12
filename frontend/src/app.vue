@@ -82,7 +82,7 @@
               <div v-if="suggestions.length === 0" class="suggestion-empty">未找到相关学者</div>
             </div>
           </div>
-          <!-- AI Chat Icon -->
+           <!-- AI Chat Icon -->
           <div class="ai-chat-icon" @click="toggleAiChat" title="AI学术助手">
             <span class="icon">🤖</span>
           </div>
@@ -90,13 +90,12 @@
       </div>
     </header>
 
-<<<<<<< HEAD
 
-    <div class="carousel-section">
-=======
+    <div class="carousel-section"> 
+
     <div class="carousel-section" v-if="$route.path === '/'">
->>>>>>> cb0e577e8ad30a50d3b42195b2972bf30473f0ec
-      <div class="carousel-container">
+
+            <div class="carousel-container">
         <div class="carousel-wrapper" :style="{ 
           transform: `translateX(-${currentSlide * 100}%)`,
           transition: `transform ${getTransitionDuration()}s cubic-bezier(0.25, 0.8, 0.25, 1)`
@@ -150,14 +149,14 @@
 </template>
 
 <script>
-<<<<<<< HEAD
+
 import axios from 'axios'  // 重要：导入 axios
 import ScholarDetailModal from './views/AuthorDetailView.vue'
-=======
+
 // 核心修正：导入弹窗组件（请确保该文件在 src/components/ 下）
 import ScholarDetailModal from './views/AuthorDetailView.vue';
 import AiChatDialog from './components/AiChatDialog.vue';
->>>>>>> cb0e577e8ad30a50d3b42195b2972bf30473f0ec
+
 
 export default {
   name: 'App',
@@ -257,14 +256,16 @@ export default {
       const query = this.searchQuery.trim()
       if (!query) return
       this.showSuggestions = false
+      // 尝试精确匹配或取第一个搜索结果
       try {
         const response = await axios.get('http://localhost:8080/api/rankings/search', {
-          params: { name: query, page: 1, size: 1 }
+          params: { name: query, size: 1 }
         })
         const authors = response.data
         if (authors && authors.length > 0) {
           this.openModal(authors[0])
         } else {
+          // 无结果提示（可简单处理）
           alert(`未找到学者“${query}”`)
         }
       } catch (err) {
@@ -278,6 +279,7 @@ export default {
       this.showSuggestions = false
     },
     handleBlur() {
+      // 延迟关闭，以允许点击推荐项
       setTimeout(() => {
         this.showSuggestions = false
       }, 200)
@@ -704,7 +706,7 @@ export default {
   color: white;
 }
 
-<<<<<<< HEAD
+
 .search-btn {
   background: linear-gradient(135deg, #667eea, #764ba2);
   border: none;
@@ -802,7 +804,7 @@ export default {
   box-shadow: none;
   animation: none;
   backdrop-filter: none;
->>>>>>> cb0e577e8ad30a50d3b42195b2972bf30473f0ec
+
 }
 
 /* 轮播图区域 */
@@ -838,6 +840,10 @@ export default {
 
 .slide-content.hotspot-style {
   position: relative;
+  margin-right: 40px;
+}
+
+.slide-bg {
   width: 100%;
   height: 100%;
   border-radius: 12px;
