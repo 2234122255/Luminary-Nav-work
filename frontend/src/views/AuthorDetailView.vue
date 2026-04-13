@@ -31,6 +31,18 @@
                 <span v-for="tag in tags" :key="tag" class="tag">{{ tag }}</span>
               </div>
             </div>
+
+            <!-- 新增：导出画报按钮区域 -->
+            <div class="export-area">
+              <div class="dropdown">
+                <button class="export-btn" @click="toggleDropdown">📎 导出画报</button>
+                <div v-if="dropdownOpen" class="dropdown-menu">
+                  <div class="dropdown-item" @click="exportAsImage">📸 导出为图片</div>
+                  <div class="dropdown-item" @click="exportAsPDF">📄 导出为 PDF</div>
+                </div>
+              </div>
+            </div>
+            <!-- 导出按钮结束 -->
           </div>
 
           <div class="chart-side">
@@ -41,11 +53,16 @@
       </div>
     </div>
   </Transition>
+
+  <!-- 隐藏的画板容器，用于生成导出内容 -->
+  <div ref="posterContainer" style="position: fixed; left: -9999px; top: 0; z-index: -1;"></div>
 </template>
 
 <script setup>
 import axios from 'axios'
 import * as echarts from 'echarts'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -60,6 +77,11 @@ const router = useRouter()
 const radarChart = ref(null)
 const fetchedScholar = ref(null)
 let chartInstance = null
+
+// 导出相关
+const posterContainer = ref(null)
+let posterChartInstance = null
+const dropdownOpen = ref(false)
 
 const isRouteMode = computed(() => props.visible === undefined)
 const isVisible = computed(() => (props.visible === undefined ? true : props.visible))
@@ -180,6 +202,130 @@ const onMaskClick = () => {
   if (!isRouteMode.value) close()
 }
 
+// ==================== 导出功能开始 ====================
+const buildPosterHTML = () => {
+  const scholar = currentScholar.value
+  if (!scholar) return ''
+  const name = scholar.name || 'Unknown Scholar'
+  const org = scholar.org || scholar.institution || 'Unknown Institution'
+  const totalScore = Number(scholar.totalScore || scholar.score || 0).toFixed(4)
+  const paperCount = scholar.paperCount || 0
+  const radarValues = normalizeRadar()
+  const radarIndicators = ['影响力', '活跃度', '引用量', '合作频率', '创新性', '产出比']
+  // 研究领域标签（使用原有的 tags 计算属性）
+  const fieldTags = tags.value.map(tag => `<span style="background:rgba(139,92,246,0.2); padding:5px 12px; border-radius:20px; font-size:12px; margin:4px;">${tag}</span>`).join('')
+  return `
+    <div id="scholar-poster" style="width:800px; background:linear-gradient(135deg, #0f0c29 0%, #302b63 100%); border-radius:24px; padding:40px; font-family:'Helvetica Neue',sans-serif; color:white; box-shadow:0 20px 40px rgba(0,0,0,0.4);">
+      <div style="display:flex; align-items:center; gap:20px; margin-bottom:30px;">
+        <div style="width:80px; height:80px; border-radius:20px; background:linear-gradient(135deg,#8b5cf6,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:36px; font-weight:bold;">${name.charAt(0)}</div>
+        <div>
+          <h1 style="margin:0; font-size:32px;">${name}</h1>
+          <p style="color:rgba(255,255,255,0.7); margin:5px 0 0;">${org}</p>
+        </div>
+      </div>
+      <div style="display:flex; gap:40px; margin-bottom:30px;">
+        <div><span style="color:#8b5cf6; text-transform:uppercase; font-size:12px;">学术总分</span><div style="font-size:28px; font-weight:bold; color:#fbbf24;">${totalScore}</div></div>
+        <div><span style="color:#8b5cf6; text-transform:uppercase; font-size:12px;">论文总量</span><div style="font-size:28px; font-weight:bold;">${paperCount}</div></div>
+      </div>
+      <div style="margin-bottom:30px;">
+        <h4 style="margin:0 0 12px; color:#8b5cf6;">核心研究领域</h4>
+        <div style="display:flex; flex-wrap:wrap; gap:10px;">${fieldTags}</div>
+      </div>
+      <div style="margin-top:20px;">
+        <h4 style="margin:0 0 12px; color:#8b5cf6;">学术能力画像</h4>
+        <div id="poster-radar" style="width:100%; height:300px;"></div>
+      </div>
+      <div style="margin-top:30px; text-align:center; font-size:12px; color:rgba(255,255,255,0.5); border-top:1px solid rgba(255,255,255,0.2); padding-top:20px;">
+        Luminary Nav · 学者画报
+      </div>
+    </div>
+  `
+}
+
+const renderPosterRadar = () => {
+  return new Promise((resolve) => {
+    const container = posterContainer.value
+    if (!container) return resolve()
+    const radarDiv = container.querySelector('#poster-radar')
+    if (!radarDiv) return resolve()
+    if (posterChartInstance) posterChartInstance.dispose()
+    posterChartInstance = echarts.init(radarDiv)
+    const radarValues = normalizeRadar()
+    const option = {
+      backgroundColor: 'transparent',
+      radar: {
+        indicator: [
+          { name: '影响力', max: 1 }, { name: '活跃度', max: 1 }, { name: '引用量', max: 1 },
+          { name: '合作频率', max: 1 }, { name: '创新性', max: 1 }, { name: '产出比', max: 1 }
+        ],
+        shape: 'circle',
+        splitNumber: 4,
+        axisName: { color: '#ddd' },
+        splitLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }
+      },
+      series: [{
+        type: 'radar',
+        data: [{ value: radarValues, areaStyle: { color: 'rgba(139,92,246,0.3)' }, lineStyle: { color: '#8b5cf6', width: 2 }, itemStyle: { color: '#8b5cf6' } }]
+      }]
+    }
+    posterChartInstance.setOption(option)
+    setTimeout(resolve, 300)
+  })
+}
+
+const exportAsImage = async () => {
+  dropdownOpen.value = false
+  const container = posterContainer.value
+  if (!container) return
+  container.innerHTML = buildPosterHTML()
+  await renderPosterRadar()
+  const posterDiv = container.firstElementChild
+  if (!posterDiv) return
+  try {
+    const canvas = await html2canvas(posterDiv, { scale: 2, backgroundColor: null })
+    const link = document.createElement('a')
+    link.download = `${currentScholar.value?.name || 'scholar'}_学术画报.png`
+    link.href = canvas.toDataURL()
+    link.click()
+  } catch (err) {
+    console.error('导出图片失败', err)
+    alert('导出失败，请重试')
+  } finally {
+    container.innerHTML = ''
+  }
+}
+
+const exportAsPDF = async () => {
+  dropdownOpen.value = false
+  const container = posterContainer.value
+  if (!container) return
+  container.innerHTML = buildPosterHTML()
+  await renderPosterRadar()
+  const posterDiv = container.firstElementChild
+  if (!posterDiv) return
+  try {
+    const canvas = await html2canvas(posterDiv, { scale: 2, backgroundColor: null })
+    const imgData = canvas.toDataURL('image/png')
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'px',
+      format: [canvas.width, canvas.height]
+    })
+    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height)
+    pdf.save(`${currentScholar.value?.name || 'scholar'}_学术画报.pdf`)
+  } catch (err) {
+    console.error('导出PDF失败', err)
+    alert('导出失败，请重试')
+  } finally {
+    container.innerHTML = ''
+  }
+}
+
+const toggleDropdown = () => {
+  dropdownOpen.value = !dropdownOpen.value
+}
+// ==================== 导出功能结束 ====================
+
 watch([isVisible, currentScholar], async ([visible]) => {
   if (!visible) return
   await nextTick()
@@ -196,10 +342,12 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', initChart)
   if (chartInstance) chartInstance.dispose()
+  if (posterChartInstance) posterChartInstance.dispose()
 })
 </script>
 
 <style scoped>
+/* 原有样式保持不变 */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -338,6 +486,48 @@ onBeforeUnmount(() => {
   flex: 1;
   width: 100%;
   min-height: 350px;
+}
+
+/* 新增导出按钮样式 */
+.export-area {
+  margin-top: 30px;
+  position: relative;
+}
+.export-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  padding: 8px 20px;
+  border-radius: 30px;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s;
+}
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+}
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: rgba(30,30,50,0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 100;
+  margin-top: 8px;
+  border: 1px solid rgba(139,92,246,0.3);
+}
+.dropdown-item {
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: 0.2s;
+  color: white;
+  font-size: 14px;
+}
+.dropdown-item:hover {
+  background: rgba(139,92,246,0.3);
 }
 
 .fade-scale-enter-active,
