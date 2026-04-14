@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class NetworkGraphService {
+    private static final int BASE_POOL_LIMIT = 600;
 
     private final List<NodeRecord> allNodes = new ArrayList<>();
     private final List<EdgeRecord> allEdges = new ArrayList<>();
@@ -40,7 +41,6 @@ public class NetworkGraphService {
     }
 
     public Map<String, Object> buildGraph(Integer startYear, Integer endYear, String field, Integer limitNodes) {
-        int safeLimit = (limitNodes == null || limitNodes <= 0) ? 1200 : Math.min(limitNodes, 2000);
         String normalizedField = field == null ? "" : field.trim().toLowerCase(Locale.ROOT);
         boolean applyYearFilter = yearFilterSupported && (startYear != null || endYear != null);
 
@@ -52,9 +52,26 @@ public class NetworkGraphService {
                 .flatMap(edge -> Arrays.stream(new String[]{edge.source(), edge.target()}))
                 .collect(Collectors.toSet());
 
-        List<NodeRecord> filteredNodes = allNodes.stream()
+        // 真实筛选数量（用于前端展示）：在全量节点中按领域+年份过滤
+        List<NodeRecord> fullMatchedNodes = allNodes.stream()
                 .filter(node -> matchesField(node, normalizedField))
                 .filter(node -> !applyYearFilter || yearMatchedNodeIds.contains(node.id()))
+                .collect(Collectors.toList());
+
+        // 固定以“总领域得分前 600”作为基础节点池，子领域在该池内继续筛选（用于渲染性能）
+        List<NodeRecord> basePoolNodes = allNodes.stream()
+                .limit(BASE_POOL_LIMIT)
+                .collect(Collectors.toList());
+
+        List<NodeRecord> matchedNodes = basePoolNodes.stream()
+                .filter(node -> matchesField(node, normalizedField))
+                .filter(node -> !applyYearFilter || yearMatchedNodeIds.contains(node.id()))
+                .collect(Collectors.toList());
+        int requestedLimit = (limitNodes == null || limitNodes <= 0)
+                ? BASE_POOL_LIMIT
+                : Math.min(limitNodes, BASE_POOL_LIMIT);
+        int safeLimit = Math.min(requestedLimit, matchedNodes.size());
+        List<NodeRecord> filteredNodes = matchedNodes.stream()
                 .limit(safeLimit)
                 .collect(Collectors.toList());
 
@@ -80,12 +97,15 @@ public class NetworkGraphService {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("nodes", nodeDtos);
         result.put("links", linkDtos);
-        result.put("totalNodes", nodeDtos.size());
+        // 返回“真实筛选数量”（用于前端展示），而非当前渲染数量
+        result.put("totalNodes", fullMatchedNodes.size());
+        result.put("renderedNodes", nodeDtos.size());
         result.put("totalLinks", linkDtos.size());
         Map<String, Object> filters = new LinkedHashMap<>();
         filters.put("startYear", startYear);
         filters.put("endYear", endYear);
         filters.put("field", normalizedField);
+        filters.put("basePoolLimit", BASE_POOL_LIMIT);
         filters.put("yearFilterSupported", yearFilterSupported);
         filters.put("yearFilterApplied", applyYearFilter);
         filters.put("minAvailableYear", minAvailableYear);

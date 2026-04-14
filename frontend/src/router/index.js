@@ -69,4 +69,35 @@ const router = createRouter({
     routes
 })
 
+router.beforeEach((to, from, next) => {
+    if (to.path === '/login') {
+        try {
+            const auth = JSON.parse(localStorage.getItem('luminaryAuth') || 'null')
+            if (auth?.role === 'admin') {
+                next('/admin')
+                return
+            }
+        } catch {
+            localStorage.removeItem('luminaryAuth')
+        }
+    }
+
+    if (!to.meta?.requiresAdmin) {
+        next()
+        return
+    }
+
+    try {
+        const auth = JSON.parse(localStorage.getItem('luminaryAuth') || 'null')
+        if (auth?.role === 'admin') {
+            next()
+            return
+        }
+    } catch {
+        localStorage.removeItem('luminaryAuth')
+    }
+
+    next('/login')
+})
+
 export default router

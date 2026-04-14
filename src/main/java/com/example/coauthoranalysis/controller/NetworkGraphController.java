@@ -23,7 +23,7 @@ public class NetworkGraphController {
             @RequestParam(required = false) Integer startYear,
             @RequestParam(required = false) Integer endYear,
             @RequestParam(required = false) String field,
-            @RequestParam(defaultValue = "1200") Integer limitNodes
+            @RequestParam(required = false) Integer limitNodes
     ) {
         return networkGraphService.buildGraph(startYear, endYear, field, limitNodes);
     }

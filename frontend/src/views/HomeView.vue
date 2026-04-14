@@ -13,7 +13,7 @@
           <div class="network-graph">
             <div class="central-node">
               <div class="person-icon">👤</div>
-              <span class="connection-count">213</span>
+              <span class="connection-count">103,470</span>
             </div>
             <div class="network-lines">
               <div class="line line-1"></div>
@@ -206,11 +206,8 @@ export default {
           .style('stroke-width', '0.9px')
           .attr('text-anchor', 'middle')
           .attr('transform', d => `translate(${d.x},${d.y})rotate(${d.rotate})`)
-          .style('cursor', 'pointer')
+          .style('cursor', 'default')
           .text(d => d.text)
-          .on('click', (event, d) => {
-            vm.$router.push({ name: 'AuthorSearch', query: { q: d.text } })
-          })
           .on('mouseover', function (event, d) {
             d3.select(this)
               .style('stroke', 'rgba(245, 208, 254, 0.95)')

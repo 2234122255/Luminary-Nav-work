@@ -283,30 +283,49 @@ const renderPosterRadar = () => {
   return new Promise((resolve) => {
     const container = posterContainer.value
     if (!container) return resolve()
+
     const radarDiv = container.querySelector('#poster-radar')
     if (!radarDiv) return resolve()
+
     if (posterChartInstance) posterChartInstance.dispose()
     posterChartInstance = echarts.init(radarDiv)
+
     const radarValues = normalizeRadar()
-    const option = {
+    posterChartInstance.setOption({
+      animation: false,
       backgroundColor: 'transparent',
       radar: {
+        center: ['50%', '54%'],
+        radius: '65%',
         indicator: [
-          { name: '影响力', max: 1 }, { name: '活跃度', max: 1 }, { name: '引用量', max: 1 },
-          { name: '合作频率', max: 1 }, { name: '创新性', max: 1 }, { name: '产出比', max: 1 }
+          { name: '影响力', max: 1 },
+          { name: '活跃度', max: 1 },
+          { name: '引用量', max: 1 },
+          { name: '合作频率', max: 1 },
+          { name: '创新性', max: 1 },
+          { name: '产出比', max: 1 }
         ],
         shape: 'circle',
         splitNumber: 4,
         axisName: { color: '#ddd' },
-        splitLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }
+        splitLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
+        axisLine: { lineStyle: { color: 'rgba(255,255,255,0.45)' } }
       },
       series: [{
         type: 'radar',
-        data: [{ value: radarValues, areaStyle: { color: 'rgba(139,92,246,0.3)' }, lineStyle: { color: '#8b5cf6', width: 2 }, itemStyle: { color: '#8b5cf6' } }]
+        symbol: 'circle',
+        symbolSize: 6,
+        data: [{
+          value: radarValues,
+          areaStyle: { color: 'rgba(139,92,246,0.3)' },
+          lineStyle: { color: '#8b5cf6', width: 2 },
+          itemStyle: { color: '#8b5cf6' }
+        }]
       }]
-    }
-    posterChartInstance.setOption(option)
-    setTimeout(resolve, 300)
+    }, true)
+
+    posterChartInstance.resize()
+    requestAnimationFrame(() => requestAnimationFrame(resolve))
   })
 }
 

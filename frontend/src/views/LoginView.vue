@@ -114,7 +114,7 @@ export default {
         role: 'admin',
         username: ADMIN_USERNAME
       })
-      this.$router.push('/')
+      this.$router.push('/admin')
     }
   }
 }
