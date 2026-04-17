@@ -24,6 +24,7 @@ Luminary-Nav leverages the **Aliyun Bailian API** and interactive network visual
 - **[Apr 2026] User Authentication & Permission Management:** Implemented frontend user registration, login, and logout functionalities, alongside a dedicated administrator page and new data download access controls.
 - **[Apr 2026] Visualization & Interaction Upgrades:** Introduced a hot topic word cloud; significantly beautified the co-authorship network graph and improved its interactions; removed the geographic heatmap to focus on core graph analysis; optimized carousel features and full-site search capabilities.
 - **[Apr 2026] AI Scholar Assistant & Card Export:** Integrated an intelligent conversational agent based on the Aliyun Bailian standard API. Integrated `html2canvas` and `jspdf` to enable one-click exports of high-definition Scholar Cards and posters.
+- **[Apr 2026] Test Suite:** Introduced a comprehensive test suite, including black-box testing for navigation search (Python+pytest) and white-box testing for core algorithms (Java+Jacoco coverage), along with a software maintenance plan. See the [Test Documentation](tests/README.md) for details.
 - **[Apr 2026] Academic Hotspots Integration:** The homepage carousel now directly syncs with academic hotspots, keeping the platform updated with the latest technological trends.
 - **[Mar 2026] Full-stack Overhaul:** Complete redesign of the frontend UI featuring a modern dark-tech aesthetic, along with a robust Spring Boot backend tailored for large-scale scholar data aggregation and high-concurrency queries.
 
@@ -34,6 +35,7 @@ Luminary-Nav leverages the **Aliyun Bailian API** and interactive network visual
 - [x] **v1.1.0** Homepage & Visual Revamp: Synchronized academic hotspots for the homepage top carousel rendering.
 - [x] **v1.2.0** AI Copilot & Smart Scholar Cards: Introduced a global AI chat floating window with drag-to-resize support and immersive dark UI.
 - [x] **v1.3.0** Permission Management & Deep Visualization: Added user and admin login systems, introduced hot topic word clouds, and enabled deep network interactions.
+- [x] **v1.4.0** Testing & Quality Assurance: Added a comprehensive black-box/white-box test suite, automated code coverage reporting (Jacoco), and software maintenance documentation.
 
 ## 🎉 Features
 Luminary-Nav adopts an efficient, multi-tiered architecture that separates computationally intensive graph analysis from real-time data serving:
