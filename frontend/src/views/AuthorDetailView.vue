@@ -4,6 +4,7 @@
       <div class="modal-content glass-morphism">
         <button class="close-btn" @click="close">×</button>
 
+        <!-- 可滚动的主体内容区 -->
         <div class="modal-body" v-if="currentScholar">
           <div class="info-side">
             <div class="profile-header">
@@ -25,39 +26,115 @@
               </div>
             </div>
 
-            <div class="bio-section">
+            <!-- 专属区域：Francisco Herrera 展示丰富信息 -->
+            <div v-if="isFranciscoHerrera" class="francisco-bio-section">
+              <!-- 个人简介 -->
+              <div class="bio-card">
+                <h4 class="section-title">📋 个人简介</h4>
+                <p class="bio-text">
+                  Francisco Herrera 是西班牙格拉纳达大学计算机科学与人工智能系教授，Andalusian 数据科学与计算智能研究所 (DaSCI) 主任。
+                  他于1988年和1991年获得格拉纳达大学数学硕士和博士学位，是西班牙皇家工程院院士、欧洲工程院院士。
+                </p>
+              </div>
+
+              <!-- 研究领域 -->
+              <div class="bio-card">
+                <h4 class="section-title">🔬 研究领域</h4>
+                <div class="research-tags">
+                  <span class="research-tag">计算智能</span>
+                  <span class="research-tag">模糊系统</span>
+                  <span class="research-tag">数据挖掘</span>
+                  <span class="research-tag">机器学习</span>
+                  <span class="research-tag">信息融合</span>
+                  <span class="research-tag">大数据</span>
+                  <span class="research-tag">可解释人工智能 (XAI)</span>
+                  <span class="research-tag">进化算法</span>
+                </div>
+              </div>
+
+              <!-- 学术荣誉 -->
+              <div class="bio-card">
+                <h4 class="section-title">🏆 学术荣誉</h4>
+                <ul class="honor-list">
+                  <li>高被引研究员 (Clarivate Analytics, 2014-至今)</li>
+                  <li>ECCAI Fellow (2009) | IFSA Fellow (2013)</li>
+                  <li>西班牙国家计算机科学奖 ARITMEL (2010)</li>
+                  <li>安达卢西亚研究奖 Maimónides (2014)</li>
+                  <li>安达卢西亚勋章 (2017)</li>
+                  <li>信息融合期刊 (Elsevier) 主编</li>
+                </ul>
+              </div>
+
+              <!-- 学术贡献 -->
+              <div class="bio-card">
+                <h4 class="section-title">📊 学术贡献</h4>
+                <div class="achievement-grid">
+                  <div class="achievement-item">
+                    <span class="achievement-number">173+</span>
+                    <span class="achievement-label">H-index</span>
+                  </div>
+                  <div class="achievement-item">
+                    <span class="achievement-number">130K+</span>
+                    <span class="achievement-label">总引用量</span>
+                  </div>
+                  <div class="achievement-item">
+                    <span class="achievement-number">600+</span>
+                    <span class="achievement-label">期刊论文</span>
+                  </div>
+                  <div class="achievement-item">
+                    <span class="achievement-number">46+</span>
+                    <span class="achievement-label">博士生导师</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 其他学者保持简洁研究领域标签 -->
+            <div v-else class="bio-section">
               <h4>核心研究领域</h4>
               <div class="tags">
                 <span v-for="tag in tags" :key="tag" class="tag">{{ tag }}</span>
               </div>
             </div>
-
-            <!-- 新增：导出画报按钮区域 -->
-            <div class="export-area">
-              <div class="dropdown">
-                <button class="export-btn" @click="toggleDropdown">📎 导出画报</button>
-                <div v-if="dropdownOpen" class="dropdown-menu">
-                  <div class="dropdown-item" @click="exportAsImage">📸 导出为图片</div>
-                  <div class="dropdown-item" @click="exportAsPDF">📄 导出为 PDF</div>
-                </div>
-              </div>
-            </div>
-            <!-- 导出按钮结束 -->
           </div>
 
           <div class="chart-side">
             <h4 class="chart-title">学术能力画像 (Academic Portrait)</h4>
             <div ref="radarChart" class="radar-canvas"></div>
+
+            <!-- 合著者区域 -->
+            <div class="coauthors-section">
+              <h4 class="coauthors-title">👥 合作者 (Co-authors)</h4>
+              <div v-if="coauthorsList.length > 0" class="coauthors-list">
+                <div v-for="coauthor in coauthorsList" :key="coauthor.name" class="coauthor-item">
+                  <span class="coauthor-name">{{ coauthor.name }}</span>
+                  <span class="coauthor-count">{{ coauthor.paperCount }}篇合作</span>
+                </div>
+              </div>
+              <div v-else class="coauthors-placeholder">暂无合作者信息</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 导出按钮固定在底部（始终可见） -->
+        <div class="export-footer">
+          <div class="export-area">
+            <div class="dropdown">
+              <button class="export-btn" @click="toggleDropdown">📎 导出画报</button>
+              <div v-if="dropdownOpen" class="dropdown-menu">
+                <div class="dropdown-item" @click="exportAsImage">📸 导出为图片</div>
+                <div class="dropdown-item" @click="exportAsPDF">📄 导出为 PDF</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </Transition>
 
-  <!-- 隐藏的画板容器，用于生成导出内容 -->
+  <!-- 隐藏画板，用于导出 -->
   <div ref="posterContainer" style="position: fixed; left: -9999px; top: 0; z-index: -1;"></div>
 </template>
-
 <script setup>
 import axios from 'axios'
 import * as echarts from 'echarts'
@@ -87,6 +164,14 @@ const isRouteMode = computed(() => props.visible === undefined)
 const isVisible = computed(() => (props.visible === undefined ? true : props.visible))
 const currentScholar = computed(() => props.scholar || fetchedScholar.value)
 
+// 判断是否为 Francisco Herrera
+const isFranciscoHerrera = computed(() => {
+  const name = currentScholar.value?.name || ''
+  const id = currentScholar.value?.id || ''
+  return name.toLowerCase().includes('francisco herrera') || id === '53f48bdadabfaea7cd1cd2ff'
+})
+
+// 其他学者的研究领域标签（动态推断）
 const tags = computed(() => {
   const org = String(currentScholar.value?.org || '').toLowerCase()
   if (org.includes('software')) return ['Software Engineering', 'Systems', 'Testing']
@@ -95,6 +180,20 @@ const tags = computed(() => {
   return ['Computer Science', 'Data Mining', 'AI']
 })
 
+// ================= 合著者列表（仅 Francisco Herrera 有数据） =================
+const coauthorsList = computed(() => {
+  if (!isFranciscoHerrera.value) return []
+  // 基于 Google Scholar 常见合作者模拟数据
+  return [
+    { name: 'Jesús Alcalá-Fdez', paperCount: 48 },
+    { name: 'Luis Magdalena', paperCount: 36 },
+    { name: 'Rafael Alcalá', paperCount: 29 },
+    { name: 'Alberto Fernández', paperCount: 42 },
+    { name: 'Salvador García', paperCount: 38 }
+  ]
+})
+
+// ================= 雷达图数据处理 =================
 const clamp01 = (v) => Math.max(0, Math.min(1, v))
 
 const normalizeMetricValue = (value, fallback = 0.35) => {
@@ -174,6 +273,7 @@ const initChart = () => {
   })
 }
 
+// 根据 id 加载学者详情（路由模式）
 const loadScholarById = async () => {
   if (!isRouteMode.value || !props.id) return
   try {
@@ -202,7 +302,7 @@ const onMaskClick = () => {
   if (!isRouteMode.value) close()
 }
 
-// ==================== 导出功能开始 ====================
+// ================= 导出画报功能 =================
 const buildPosterHTML = () => {
   const scholar = currentScholar.value
   if (!scholar) return ''
@@ -211,13 +311,39 @@ const buildPosterHTML = () => {
   const totalScore = Number(scholar.totalScore || scholar.score || 0).toFixed(4)
   const paperCount = scholar.paperCount || 0
   const radarValues = normalizeRadar()
-  const radarIndicators = ['影响力', '活跃度', '引用量', '合作频率', '创新性', '产出比']
-  // 研究领域标签（使用原有的 tags 计算属性）
-  const fieldTags = tags.value.map(tag => `<span style="background:rgba(139,92,246,0.2); padding:5px 12px; border-radius:20px; font-size:12px; margin:4px;">${tag}</span>`).join('')
+  let fieldTags = ''
+  if (isFranciscoHerrera.value) {
+    fieldTags = ['计算智能', '模糊系统', '数据挖掘', '机器学习', '信息融合'].map(tag => 
+      `<span style="background:rgba(139,92,246,0.2); padding:5px 12px; border-radius:20px; font-size:12px; margin:4px;">${tag}</span>`
+    ).join('')
+  } else {
+    fieldTags = tags.value.map(tag => 
+      `<span style="background:rgba(139,92,246,0.2); padding:5px 12px; border-radius:20px; font-size:12px; margin:4px;">${tag}</span>`
+    ).join('')
+  }
+
+  // Francisco Herrera 专属额外内容
+  const extraBio = isFranciscoHerrera.value ? `
+    <div style="margin-bottom:30px;">
+      <h4 style="margin:0 0 12px; color:#8b5cf6;">📋 个人简介</h4>
+      <p style="font-size:14px; line-height:1.6; color:rgba(255,255,255,0.85);">Francisco Herrera 是西班牙格拉纳达大学计算机科学与人工智能系教授，Andalusian 数据科学与计算智能研究所 (DaSCI) 主任。他于1988年和1991年获得格拉纳达大学数学硕士和博士学位，是西班牙皇家工程院院士、欧洲工程院院士。高被引研究员 (Clarivate Analytics, 2014-至今)，信息融合期刊 (Elsevier) 主编。</p>
+    </div>
+    <div style="margin-bottom:30px;">
+      <h4 style="margin:0 0 12px; color:#8b5cf6;">🏆 学术荣誉</h4>
+      <ul style="margin:0; padding-left:20px; color:rgba(255,255,255,0.8); font-size:13px;">
+        <li>高被引研究员 (Clarivate Analytics, 2014-至今)</li>
+        <li>ECCAI Fellow (2009) | IFSA Fellow (2013)</li>
+        <li>西班牙国家计算机科学奖 ARITMEL (2010)</li>
+        <li>安达卢西亚研究奖 Maimónides (2014)</li>
+        <li>安达卢西亚勋章 (2017)</li>
+      </ul>
+    </div>
+  ` : ''
+
   return `
     <div id="scholar-poster" style="width:800px; background:linear-gradient(135deg, #0f0c29 0%, #302b63 100%); border-radius:24px; padding:40px; font-family:'Helvetica Neue',sans-serif; color:white; box-shadow:0 20px 40px rgba(0,0,0,0.4);">
       <div style="display:flex; align-items:center; gap:20px; margin-bottom:30px;">
-        <div style="width:80px; height:80px; border-radius:20px; background:linear-gradient(135deg,#8b5cf6,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:36px; font-weight:bold;">${name.charAt(0)}</div>
+        <div style="width:80px; height:80px; border-radius:8px; background:linear-gradient(135deg,#8b5cf6,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:36px; font-weight:bold;">${name.charAt(0)}</div>
         <div>
           <h1 style="margin:0; font-size:32px;">${name}</h1>
           <p style="color:rgba(255,255,255,0.7); margin:5px 0 0;">${org}</p>
@@ -231,6 +357,7 @@ const buildPosterHTML = () => {
         <h4 style="margin:0 0 12px; color:#8b5cf6;">核心研究领域</h4>
         <div style="display:flex; flex-wrap:wrap; gap:10px;">${fieldTags}</div>
       </div>
+      ${extraBio}
       <div style="margin-top:20px;">
         <h4 style="margin:0 0 12px; color:#8b5cf6;">学术能力画像</h4>
         <div id="poster-radar" style="width:100%; height:300px;"></div>
@@ -324,8 +451,8 @@ const exportAsPDF = async () => {
 const toggleDropdown = () => {
   dropdownOpen.value = !dropdownOpen.value
 }
-// ==================== 导出功能结束 ====================
 
+// 监听弹窗显示，重新绘制雷达图
 watch([isVisible, currentScholar], async ([visible]) => {
   if (!visible) return
   await nextTick()
@@ -347,7 +474,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* 原有样式保持不变 */
+/* 基础样式 */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -368,7 +495,7 @@ onBeforeUnmount(() => {
 
 .modal-content {
   width: min(900px, 92vw);
-  height: min(560px, 88vh);
+  height: min(620px, 88vh);
   position: relative;
   padding: 36px;
   display: flex;
@@ -390,6 +517,7 @@ onBeforeUnmount(() => {
   display: flex;
   gap: 32px;
   height: 100%;
+  overflow-y: auto;
 }
 
 .info-side {
@@ -402,22 +530,23 @@ onBeforeUnmount(() => {
   flex-direction: column;
 }
 
-.profile-header {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-}
-
+/* 头像正方形 */
 .avatar-glow {
-  width: 60px;
+  width: 150px;
   height: 60px;
-  border-radius: 15px;
+  border-radius: 8px;
   background: linear-gradient(135deg, #8b5cf6, #3b82f6);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24px;
   font-weight: bold;
+}
+
+.profile-header {
+  display: flex;
+  gap: 14px;
+  align-items: center;
 }
 
 .name-text {
@@ -453,6 +582,7 @@ onBeforeUnmount(() => {
   color: #fbbf24;
 }
 
+/* 其他学者简洁区域 */
 .bio-section {
   margin-top: 24px;
 }
@@ -477,21 +607,179 @@ onBeforeUnmount(() => {
   color: #d9ccff;
 }
 
+/* 学术能力画像区域：标题紧凑 */
 .chart-title {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   color: #ddd6ff;
+  font-size: 16px;
 }
 
 .radar-canvas {
   flex: 1;
   width: 100%;
-  min-height: 350px;
+  min-height: 300px;
 }
 
-/* 新增导出按钮样式 */
-.export-area {
-  margin-top: 30px;
+/* 合著者区域 */
+.coauthors-section {
+  margin-top: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 12px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.coauthors-title {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #c7b7ff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coauthors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coauthor-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.coauthor-item:hover {
+  background: rgba(139, 92, 246, 0.2);
+}
+
+.coauthor-name {
+  color: white;
+  font-weight: 500;
+}
+
+.coauthor-count {
+  color: #fbbf24;
+  font-size: 12px;
+}
+
+.coauthors-placeholder {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  padding: 16px;
+}
+
+/* Francisco Herrera 专属样式 */
+.francisco-bio-section {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bio-card {
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  transition: all 0.3s ease;
+}
+
+.bio-card:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.section-title {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #c7b7ff;
+  letter-spacing: 0.3px;
+}
+
+.bio-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+}
+
+.research-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.research-tag {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+  color: #d9ccff;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.honor-list {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: none;
+}
+
+.honor-list li {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 8px;
   position: relative;
+}
+
+.honor-list li::before {
+  content: "✨";
+  position: absolute;
+  left: -20px;
+  font-size: 12px;
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.achievement-item {
+  text-align: center;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+}
+
+.achievement-number {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fbbf24;
+  line-height: 1.2;
+}
+
+.achievement-label {
+  display: block;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 4px;
+}
+
+/* 导出按钮样式 */
+.export-area {
+  position: relative;
+  z-index: 300;
+  margin-top: 20px;
 }
 .export-btn {
   background: linear-gradient(135deg, #667eea, #764ba2);
@@ -530,20 +818,25 @@ onBeforeUnmount(() => {
   background: rgba(139,92,246,0.3);
 }
 
+/* 动画 */
 .fade-scale-enter-active,
 .fade-scale-leave-active {
   transition: all 0.3s ease;
 }
-
 .fade-scale-enter-from,
 .fade-scale-leave-to {
   opacity: 0;
   transform: scale(0.9);
 }
 
+/* 响应式 */
 @media (max-width: 900px) {
   .modal-body {
     flex-direction: column;
+  }
+  .modal-content {
+    height: auto;
+    max-height: 90vh;
   }
 }
 </style>

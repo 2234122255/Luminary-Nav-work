@@ -55,7 +55,7 @@
         </div>
 
         <!-- 机构排名榜单 -->
-        <div class="ranking-card">
+        <div class="ranking-card leaders-card">
           <h2 class="card-title">
             机构排名
             <router-link to="/rankings/institutions" class="view-all">查看全部</router-link>
@@ -92,7 +92,7 @@
           </div>
         </div>
 
-       <div class="ranking-card">
+       <div class="ranking-card leaders-card">
   <h2 class="card-title">
     潜力新星榜单
     <router-link to="/rankings/rising-stars" class="view-all">查看全部</router-link>
@@ -467,19 +467,19 @@ const applyFilters = async () => {
 .rankings-view {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f0f23 0%, #1e1b4b 50%, #312e81 100%);
-  padding: 20px 0 56px; /* 左右内边距交给内部容器统一控制 */
+  padding: 20px 0 56px;
   color: #ffffff;
 }
 
-/* 英雄区域 - 完全左对齐，与主内容左右边距一致 */
+/* 英雄区域 */
 .hero-section {
   padding: 40px 0 20px;
 }
 
 .hero-content {
-  max-width: 100%;
-  margin: 0;
-  padding: 0 40px; /* 与 .main-content 的左右内边距保持一致 */
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
 }
 
 .hero-main {
@@ -502,15 +502,9 @@ const applyFilters = async () => {
 }
 
 @keyframes gradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .hero-subtitle {
@@ -524,14 +518,14 @@ const applyFilters = async () => {
   border-left: 3px solid #a78bfa;
   padding-left: 16px;
   display: inline-block;
-  margin-left: 0; /* 确保无额外左偏移 */
 }
 
-/* 主要内容区域 */
+/* 主要内容区域 — 填满屏幕但限制最大宽度 */
 .main-content {
-  max-width: 100%;
+  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 24px;
   margin-top: 32px;
 }
 
@@ -539,7 +533,7 @@ const applyFilters = async () => {
 .rankings-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
+  gap: 24px;
   width: 100%;
 }
 
@@ -548,7 +542,7 @@ const applyFilters = async () => {
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  padding: 28px;
+  padding: 24px 20px;
   transition: all 0.3s ease;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
@@ -568,8 +562,8 @@ const applyFilters = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 16px;
-  margin-bottom: 20px;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   color: #ffffff;
   font-size: 18px;
@@ -590,18 +584,19 @@ const applyFilters = async () => {
 .ranking-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .ranking-item {
   display: grid;
-  grid-template-columns: 50px 1fr 180px;
-  align-items: flex-start;
-  padding: 18px;
-  border-radius: 16px;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.02);
-  font-size: 14px;
-  transition: all 0.3s ease;
+  font-size: 13px;
+  transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
   border: 1px solid transparent;
@@ -615,33 +610,17 @@ const applyFilters = async () => {
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
-  transition: left 0.8s ease;
+  transition: left 0.6s ease;
 }
 
 .ranking-item:hover {
-  transform: translateX(5px);
+  transform: translateX(4px);
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.1);
 }
 
 .ranking-item:hover::before {
   left: 100%;
-}
-
-.top-three .rank-badge {
-  color: white;
-}
-
-.top-three:nth-child(1) .rank-badge {
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-}
-
-.top-three:nth-child(2) .rank-badge {
-  background: linear-gradient(135deg, #9ca3af, #6b7280);
-}
-
-.top-three:nth-child(3) .rank-badge {
-  background: linear-gradient(135deg, #fb923c, #ea580c);
 }
 
 .rank-badge {
@@ -654,71 +633,75 @@ const applyFilters = async () => {
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.8);
   font-weight: bold;
-  font-size: 15px;
-  transition: all 0.3s;
-  margin-top: 2px;
+  font-size: 14px;
+  transition: all 0.2s;
 }
 
 .ranking-item:hover .rank-badge {
-  transform: scale(1.1);
+  transform: scale(1.05);
+}
+
+.top-three .rank-badge {
+  color: white;
+}
+
+.top-three:nth-child(1) .rank-badge {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+.top-three:nth-child(2) .rank-badge {
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+}
+.top-three:nth-child(3) .rank-badge {
+  background: linear-gradient(135deg, #fb923c, #ea580c);
 }
 
 .author-info {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding-right: 10px;
+  min-width: 0; /* 允许文字截断 */
 }
 
 .name {
   color: #ffffff;
   font-weight: 500;
-  font-size: 15px;
+  font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .org {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 13px;
-  max-width: 100%;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stats {
   display: flex;
-  justify-content: space-between;
+  gap: 16px;
+  justify-content: flex-end;
   align-items: center;
-  gap: 15px;
-  margin-top: 2px;
+  white-space: nowrap;
 }
 
 .papers, .score {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  transition: all 0.3s;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.ranking-item:hover .papers,
-.ranking-item:hover .score {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.1);
+  gap: 4px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .papers i, .score i {
   color: rgba(139, 92, 246, 0.8);
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .label {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 12px;
-  white-space: nowrap;
+  display: none; /* 隐藏文字标签，仅用图标表示 */
 }
 
 .value {
@@ -741,22 +724,23 @@ const applyFilters = async () => {
   color: #f87171;
 }
 
-/* 响应式设计 */
+/* 响应式布局 */
+@media (max-width: 1200px) {
+  .rankings-grid {
+    gap: 20px;
+  }
+  .ranking-item {
+    grid-template-columns: 36px 1fr auto;
+    padding: 8px 10px;
+  }
+  .stats {
+    gap: 12px;
+  }
+}
+
 @media (max-width: 1024px) {
   .rankings-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .hero-title {
-    font-size: 36px;
-  }
-  
-  .hero-subtitle {
-    font-size: 16px;
-  }
-
-  .hero-content, .main-content {
-    padding: 0 24px;
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -764,25 +748,33 @@ const applyFilters = async () => {
   .rankings-grid {
     grid-template-columns: 1fr;
   }
-
-  .stats {
-    gap: 8px;
+  .ranking-item {
+    grid-template-columns: 36px 1fr auto;
   }
-
-  .papers, .score {
-    padding: 4px 5px;
-  }
-
-  .label {
-    font-size: 11px;
-  }
-
   .hero-title {
     font-size: 32px;
   }
-
+  .hero-subtitle {
+    font-size: 16px;
+  }
   .hero-content, .main-content {
     padding: 0 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ranking-item {
+    grid-template-columns: 32px 1fr;
+    flex-wrap: wrap;
+  }
+  .stats {
+    grid-column: span 2;
+    justify-content: flex-start;
+    margin-top: 6px;
+    padding-left: 44px;
+  }
+  .papers, .score {
+    font-size: 11px;
   }
 }
 </style>
