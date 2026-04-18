@@ -145,7 +145,6 @@ import * as d3 from 'd3'
 export default {
   name: 'NetworkView',
   setup() {
-    const GRAPH_NODE_LIMIT = 1200
     const router = useRouter()
     const selectedAuthor = ref(null)
     const hoveredNode = ref(null)
@@ -287,7 +286,7 @@ export default {
             startYear: startYear.value,
             endYear: endYear.value,
             field: selectedField.value || undefined,
-            limitNodes: GRAPH_NODE_LIMIT
+            limitNodes: 600
           }
         })
         networkNodes.value = (response.data?.nodes || []).map((node, idx) => {
@@ -312,7 +311,7 @@ export default {
         const response = await axios.get('http://localhost:8080/api/rankings/search', {
           params: {
             page: 1,
-            size: GRAPH_NODE_LIMIT
+            size: 600
           }
         })
         const scholars = Array.isArray(response.data) ? response.data : []
@@ -404,9 +403,9 @@ export default {
       const margin = 40
       const safeWidth = Math.max(20, width - margin * 2)
       const safeHeight = Math.max(20, height - margin * 2)
-      const centerX = width / 2
-      const centerY = height / 2
-      const radius = Math.max(120, Math.min(safeWidth, safeHeight) * 0.46)
+      const centerX = width * 0.38
+      const centerY = height * 0.5
+      const radius = Math.max(110, Math.min(safeWidth * 0.44, safeHeight * 0.46))
       const golden = Math.PI * (3 - Math.sqrt(5))
       const sourceLinks = networkLinks.value || []
 
@@ -441,7 +440,14 @@ export default {
             : rankNorm > 0.6
               ? 0.55
               : 0.78
-        const adjustedSize = Math.max(1.1, Math.min(8.2, sizeBase * rankSizeScale))
+        const degreeFactor = Math.min(1, degree / 8)
+        const adjustedSize = Math.max(
+          1.1,
+          Math.min(
+            7.6,
+            1 + importance * 4.2 + degreeFactor * 1.6 + (1 - rankNorm) * 0.8 + (noiseA - 0.5) * 0.6 + sizeBase * 0.08 * rankSizeScale
+          )
+        )
         const edgeRatio = targetRadius / radius
         const edgeShrink = edgeRatio > 0.9
           ? 0.16
@@ -450,7 +456,7 @@ export default {
             : edgeRatio > 0.76
               ? 0.4
               : 1
-        const finalSize = Math.max(0.4, adjustedSize * edgeShrink)
+        const finalSize = Math.max(1.2, adjustedSize * edgeShrink)
         const nodePad = 18 + finalSize * 1.8
         const minX = margin + nodePad
         const maxX = width - margin - nodePad
@@ -504,7 +510,7 @@ export default {
       }
 
       // 去杂连线：每个节点最多展示少量连接，整体更干净
-      const maxVisibleLinks = Math.min(1400, Math.max(350, Math.round(nodes.length * 1.15)))
+      const maxVisibleLinks = Math.min(620, Math.max(160, Math.round(nodes.length * 0.75)))
       const degreeShown = new Map()
       const displayLinks = []
       for (const link of links) {
@@ -525,14 +531,14 @@ export default {
 
       const simLinks = displayLinks.map((link) => ({ source: link.source, target: link.target }))
       const simulation = d3.forceSimulation(nodes)
-        .force('link', d3.forceLink(simLinks).id((d) => d.id).distance(34).strength(0.08))
-        .force('charge', d3.forceManyBody().strength(-17))
-        .force('collide', d3.forceCollide().radius((d) => d.size + 1.8).iterations(1))
-        .force('radial', d3.forceRadial((d) => d.targetRadius || radius * 0.45, centerX, centerY).strength(0.035))
+        .force('link', d3.forceLink(simLinks).id((d) => d.id).distance(48).strength(0.04))
+        .force('charge', d3.forceManyBody().strength(-14))
+        .force('collide', d3.forceCollide().radius((d) => d.size + 1.1).iterations(1))
+        .force('radial', d3.forceRadial((d) => d.targetRadius || radius * 0.45, centerX, centerY).strength(0.028))
         .force('x', d3.forceX(centerX).strength(0.012))
         .force('y', d3.forceY(centerY).strength(0.012))
-        .alpha(0.42)
-        .alphaDecay(0.08)
+        .alpha(0.5)
+        .alphaDecay(0.07)
         .stop()
 
       const tickCount = nodes.length > 900 ? 35 : (nodes.length > 500 ? 50 : 70)
@@ -571,9 +577,9 @@ export default {
         .attr('y1', d => nodeMap.get(d.source).y)
         .attr('x2', d => nodeMap.get(d.target).x)
         .attr('y2', d => nodeMap.get(d.target).y)
-        .attr('stroke', 'rgba(139, 92, 246, 0.16)')
-        .attr('stroke-width', 0.9)
-        .attr('opacity', 0.9)
+        .attr('stroke', 'rgba(125, 211, 252, 0.2)')
+        .attr('stroke-width', 0.8)
+        .attr('opacity', 0.82)
 
       // 绘制节点
       const nodeGroups = svg.selectAll('g.node')
@@ -585,32 +591,47 @@ export default {
 
       // 节点圆圈
       nodeGroups.append('circle')
+        .attr('class', 'node-halo')
+        .attr('r', d => d.size * 1.9)
+        .attr('fill', d => d.importance > 0.7 ? 'rgba(167, 139, 250, 0.22)' : 'rgba(125, 211, 252, 0.18)')
+
+      nodeGroups.append('circle')
+        .attr('class', 'node-core')
         .attr('r', d => d.size)
-        .attr('fill', d => d.importance > 0.7 ? '#8b5cf6' : '#6366f1')
-        .attr('stroke', '#ffffff')
-        .attr('stroke-width', 1)
-        .attr('opacity', 0.8)
-        .style('filter', 'drop-shadow(0 0 8px rgba(139, 92, 246, 0.4))')
+        .attr('fill', d => d.importance > 0.72 ? '#a78bfa' : '#7dd3fc')
+        .attr('stroke', 'rgba(255, 255, 255, 0.72)')
+        .attr('stroke-width', 0.6)
+        .attr('opacity', 0.9)
+        .style('filter', 'drop-shadow(0 0 9px rgba(125, 211, 252, 0.34))')
+
+      nodeGroups.append('circle')
+        .attr('class', 'node-spark')
+        .attr('r', d => Math.max(0.7, d.size * 0.34))
+        .attr('fill', 'rgba(255, 255, 255, 0.95)')
+        .attr('opacity', 0.92)
 
       // 添加交互
       nodeGroups
         .on('mouseover', function (event, d) {
           // 高亮当前节点
-          d3.select(this).select('circle')
-            .attr('r', d.size * 1.5)
-            .style('filter', 'drop-shadow(0 0 12px rgba(139, 92, 246, 0.8))')
+          d3.select(this).select('.node-core')
+            .attr('r', d.size * 1.2)
+            .style('filter', 'drop-shadow(0 0 14px rgba(167, 139, 250, 0.8))')
+          d3.select(this).select('.node-halo')
+            .attr('r', d.size * 2.2)
+            .attr('fill', 'rgba(196, 181, 253, 0.35)')
 
           // 高亮相关连接线 - 增强发光效果
           linkElements
             .filter(link => link.source === d.id || link.target === d.id)
-            .attr('stroke', '#8b5cf6')
-            .attr('stroke-width', 3)
-            .style('filter', 'drop-shadow(0 0 12px rgba(139, 92, 246, 0.8))')
+            .attr('stroke', '#93c5fd')
+            .attr('stroke-width', 1.8)
+            .style('filter', 'drop-shadow(0 0 10px rgba(147, 197, 253, 0.65))')
             .style('opacity', 1)
             .transition()
             .duration(200)
-            .style('stroke', '#a855f7')
-            .style('filter', 'drop-shadow(0 0 20px rgba(139, 92, 246, 1))')
+            .style('stroke', '#c4b5fd')
+            .style('filter', 'drop-shadow(0 0 16px rgba(196, 181, 253, 0.85))')
 
           // 显示工具提示
           tooltip.value = {
@@ -627,18 +648,21 @@ export default {
         })
         .on('mouseout', function (event, d) {
           // 恢复节点样式
-          d3.select(this).select('circle')
+          d3.select(this).select('.node-core')
             .attr('r', d.size)
-            .style('filter', 'drop-shadow(0 0 8px rgba(139, 92, 246, 0.4))')
+            .style('filter', 'drop-shadow(0 0 9px rgba(125, 211, 252, 0.34))')
+          d3.select(this).select('.node-halo')
+            .attr('r', d.size * 1.9)
+            .attr('fill', d.importance > 0.7 ? 'rgba(167, 139, 250, 0.22)' : 'rgba(125, 211, 252, 0.18)')
 
           // 恢复连接线样式 - 平滑过渡
           linkElements
             .transition()
             .duration(300)
-            .attr('stroke', 'rgba(139, 92, 246, 0.3)')
-            .attr('stroke-width', 1)
+            .attr('stroke', 'rgba(125, 211, 252, 0.2)')
+            .attr('stroke-width', 0.8)
             .style('filter', 'none')
-            .style('opacity', 0.6)
+            .style('opacity', 0.82)
 
           // 隐藏工具提示
           tooltip.value.visible = false

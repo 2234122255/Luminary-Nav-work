@@ -20,34 +20,34 @@
 
 Luminary-Nav leverages the **Aliyun Bailian API** and interactive network visualization (D3.js) to enable institutions to seamlessly track academic hotspots, unearth "rising stars," and analyze global scholarly collaboration trends.
 
-## 🔄 Updates
-- **[Apr 2026] AI Scholar Assistant:** Integrated an intelligent conversational agent based on the Aliyun Bailian standard API. Users can now query co-authorship relationships dynamically and generate downloadable, stylized Scholar Business Cards.
-- **[Apr 2026] Academic Hotspots Integration:** The homepage carousel now directly syncs with the "黄大年茶思屋" academic hotspots, keeping the platform updated with the latest technological trends.
-- **[Mar 2026] Full-stack Overhaul:** Complete redesign of the frontend UI featuring a modern dark-tech aesthetic, along with a robust Spring Boot backend tailored for large-scale scholar data aggregation.
+## 🔄 Version History
+- **[Apr 2026] User Authentication & Permission Management:** Implemented frontend user registration, login, and logout functionalities, alongside a dedicated administrator page and new data download access controls.
+- **[Apr 2026] Visualization & Interaction Upgrades:** Introduced a hot topic word cloud; significantly beautified the co-authorship network graph and improved its interactions; removed the geographic heatmap to focus on core graph analysis; optimized carousel features and full-site search capabilities.
+- **[Apr 2026] AI Scholar Assistant & Card Export:** Integrated an intelligent conversational agent based on the Aliyun Bailian standard API. Integrated `html2canvas` and `jspdf` to enable one-click exports of high-definition Scholar Cards and posters.
+- **[Apr 2026] Test Suite:** Introduced a comprehensive test suite, including black-box testing for navigation search (Python+pytest) and white-box testing for core algorithms (Java+Jacoco coverage), along with a software maintenance plan. See the [Test Documentation](tests/README.md) for details.
+- **[Apr 2026] Academic Hotspots Integration:** The homepage carousel now directly syncs with academic hotspots, keeping the platform updated with the latest technological trends.
+- **[Mar 2026] Full-stack Overhaul:** Complete redesign of the frontend UI featuring a modern dark-tech aesthetic, along with a robust Spring Boot backend tailored for large-scale scholar data aggregation and high-concurrency queries.
 
 ## 🎯 Milestones
 
 - [x] **v1.0.0** Core Framework: Established the Spring Boot data processing foundation and Vue 3 frontend initialization.
 - [x] **v1.0.5** Network Visualization: Integrated D3.js to render million-node force-directed graphs for scholarly networks.
-- [x] **v1.1.0** Homepage & Visual Revamp:
-  - Synchronized "黄大年茶思屋" academic hotspots (Quantum Computing, GenAI, etc.) for the homepage top carousel.
-  - Fixed frontend routing to ensure the carousel displays exclusively on the homepage.
-- [x] **v1.2.0** AI Copilot & Smart Scholar Cards:
-  - Introduced a global AI chat floating window with drag-to-resize support and an immersive dark UI.
-  - Integrated the Aliyun Bailian LLM with real-time web search capabilities to bridge the AI information gap.
-  - Launched high-aesthetic "Scholar Cards" featuring real-world institutions, titles, and research directions, supporting HD PNG export via `html2canvas`.
+- [x] **v1.1.0** Homepage & Visual Revamp: Synchronized academic hotspots for the homepage top carousel rendering.
+- [x] **v1.2.0** AI Copilot & Smart Scholar Cards: Introduced a global AI chat floating window with drag-to-resize support and immersive dark UI.
+- [x] **v1.3.0** Permission Management & Deep Visualization: Added user and admin login systems, introduced hot topic word clouds, and enabled deep network interactions.
+- [x] **v1.4.0** Testing & Quality Assurance: Added a comprehensive black-box/white-box test suite, automated code coverage reporting (Jacoco), and software maintenance documentation.
 
-## 🎉 Overview
+## 🎉 Features
 Luminary-Nav adopts an efficient, multi-tiered architecture that separates computationally intensive graph analysis from real-time data serving:
 
-- **Intelligent Scholar Discovery:** Identifies academic "leaders" and high-potential "rising stars" based on multi-dimensional evaluation algorithms.
-- **Interactive Co-authorship Networks:** Renders force-directed graphs to visually map complex, multi-hop collaborations between authors and institutions.
-- **AI-Powered Insights:** Features an embedded AI Copilot that can instantly compile a scholar's stats into an elegantly designed, downloadable business card using real-world data.
-- **Dynamic Hotspot Tracking:** Curates a stream of academic advancements, bridging the gap between cutting-edge research and practical tracking.
+- **User Permission System:** Comprehensive registration, login, and logout workflows, distinguishing between regular users and administrators, with fine-grained download permission controls.
+- **Intelligent Scholar Discovery:** Identifies academic "leaders" (high overall impact) and high-potential "rising stars" (high growth potential) based on multi-dimensional evaluation algorithms.
+- **Interactive Co-authorship Networks:** Renders high-performance force-directed graphs via D3.js to visually map complex, multi-hop collaborations between authors and institutions.
+- **Hotspot Word Cloud Insights:** Real-time extraction and display of academic trending keywords via interactive word clouds, helping users quickly grasp research trends.
+- **AI-Powered Insights:** Features an embedded AI Copilot supporting natural language queries of the academic network, and automatically generating beautifully designed, downloadable scholar posters.
+- **Dynamic Hotspot Tracking:** Curates a stream of academic advancements, effectively bridging the information gap in cutting-edge research tracking.
 
-以下是为您精准翻译的英文版本，已严格保留原有 Markdown 结构、代码块格式与技术细节，并补全了遗漏的代码块闭合符号，符合国际开源项目规范：
-
-## 🚀 Quick Start
+## 🚀 Installation & Setup
 
 ### Prerequisites
 - Node.js 18.x or higher
@@ -61,17 +61,20 @@ Luminary-Nav adopts an efficient, multi-tiered architecture that separates compu
 git clone https://github.com/your-repo/Luminary-Nav-work.git
 ```
 
-### Frontend
-Navigate to the frontend directory and start the development server.
+### Frontend Configuration
+Navigate to the frontend directory, install dependencies, and start the development server.
 ```bash
 # Navigate to the frontend directory
 cd frontend
+
+# Install dependencies (including newly added d3, echarts, html2canvas, jspdf, etc.)
+npm install
 
 # Start the dev server
 npm run dev
 ```
 
-### Backend (Spring Boot)
+### Backend Configuration (Spring Boot)
 The backend code resides in the root directory of the `main` branch. For rapid prototyping, it defaults to an embedded database (H2/SQLite).
 
 ```bash
@@ -87,10 +90,28 @@ $env:BAILIAN_API_KEY="sk-XXXXXXXXXXXXXXXXXXXX"
 ./mvnw spring-boot:run
 ```
 
-## 🤝 Contributing
-We welcome contributions from the community! Please read our `CONTRIBUTING.md` before submitting pull requests.
+## 💡 Usage Examples
+1. **Browse Homepage Hotspots**: Open the platform homepage; the carousel will automatically display the latest academic hotspots, with a trending word cloud presented below.
+2. **Account Registration & Login**: Click "Login" in the top right corner to register an account, or use the administrator credentials (`administrator` / `123456`) to experience full access privileges.
+3. **Scholar Query & Analysis**: Enter a scholar's name in the search bar to view their co-authorship network graph and details. You can export the detail page as a high-definition academic poster with one click.
+4. **AI Chat Interaction**: Click the floating AI assistant icon and input natural language questions, such as "Please analyze the main research directions of this scholar."
 
-If you encounter any bugs or have feature requests, please open an [Issue](../../issues).
+## 📖 API Documentation
+Examples of core backend RESTful APIs:
+- `GET /api/rankings/search` - Fuzzy search for scholars (supports pagination by name and institution)
+- `GET /api/rankings/top10` - Retrieve the top 10 scholars by total score
+- `GET /api/rankings/hot-orgs` - Retrieve the top 50 most active institutions
+- `GET /api/rankings/institutions/top10` - Retrieve the top 10 institutions by comprehensive strength
+- `GET /api/rankings/rising-stars` - Retrieve high-potential rising stars (5-20 papers with high scores)
+- `GET /api/rankings/leaders` - Retrieve a paginated list of domain leaders
+
+## 🤝 Contributing
+We welcome contributions from the community!
+1. Fork the repository.
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
 
 ## 📄 License
 This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.

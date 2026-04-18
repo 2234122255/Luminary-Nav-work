@@ -1,5 +1,6 @@
 package com.example.coauthoranalysis.service;
 
+import com.example.coauthoranalysis.model.Scholar;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class NetworkGraphService {
+    private static final int BASE_POOL_LIMIT = 600;
+    private final ScholarService scholarService;
 
     private final List<NodeRecord> allNodes = new ArrayList<>();
     private final List<EdgeRecord> allEdges = new ArrayList<>();
@@ -32,6 +35,10 @@ public class NetworkGraphService {
     private Integer minAvailableYear = null;
     private Integer maxAvailableYear = null;
 
+    public NetworkGraphService(ScholarService scholarService) {
+        this.scholarService = scholarService;
+    }
+
     @PostConstruct
     public void init() {
         loadNodes();
@@ -40,7 +47,6 @@ public class NetworkGraphService {
     }
 
     public Map<String, Object> buildGraph(Integer startYear, Integer endYear, String field, Integer limitNodes) {
-        int safeLimit = (limitNodes == null || limitNodes <= 0) ? 1200 : Math.min(limitNodes, 2000);
         String normalizedField = field == null ? "" : field.trim().toLowerCase(Locale.ROOT);
         boolean applyYearFilter = yearFilterSupported && (startYear != null || endYear != null);
 
@@ -52,9 +58,26 @@ public class NetworkGraphService {
                 .flatMap(edge -> Arrays.stream(new String[]{edge.source(), edge.target()}))
                 .collect(Collectors.toSet());
 
-        List<NodeRecord> filteredNodes = allNodes.stream()
+        // 真实筛选数量（用于前端展示）：在全量节点中按领域+年份过滤
+        List<NodeRecord> fullMatchedNodes = allNodes.stream()
                 .filter(node -> matchesField(node, normalizedField))
                 .filter(node -> !applyYearFilter || yearMatchedNodeIds.contains(node.id()))
+                .collect(Collectors.toList());
+
+        // 固定以“总领域得分前 600”作为基础节点池，子领域在该池内继续筛选（用于渲染性能）
+        List<NodeRecord> basePoolNodes = allNodes.stream()
+                .limit(BASE_POOL_LIMIT)
+                .collect(Collectors.toList());
+
+        List<NodeRecord> matchedNodes = basePoolNodes.stream()
+                .filter(node -> matchesField(node, normalizedField))
+                .filter(node -> !applyYearFilter || yearMatchedNodeIds.contains(node.id()))
+                .collect(Collectors.toList());
+        int requestedLimit = (limitNodes == null || limitNodes <= 0)
+                ? BASE_POOL_LIMIT
+                : Math.min(limitNodes, BASE_POOL_LIMIT);
+        int safeLimit = Math.min(requestedLimit, matchedNodes.size());
+        List<NodeRecord> filteredNodes = matchedNodes.stream()
                 .limit(safeLimit)
                 .collect(Collectors.toList());
 
@@ -80,12 +103,15 @@ public class NetworkGraphService {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("nodes", nodeDtos);
         result.put("links", linkDtos);
-        result.put("totalNodes", nodeDtos.size());
+        // 返回“真实筛选数量”（用于前端展示），而非当前渲染数量
+        result.put("totalNodes", fullMatchedNodes.size());
+        result.put("renderedNodes", nodeDtos.size());
         result.put("totalLinks", linkDtos.size());
         Map<String, Object> filters = new LinkedHashMap<>();
         filters.put("startYear", startYear);
         filters.put("endYear", endYear);
         filters.put("field", normalizedField);
+        filters.put("basePoolLimit", BASE_POOL_LIMIT);
         filters.put("yearFilterSupported", yearFilterSupported);
         filters.put("yearFilterApplied", applyYearFilter);
         filters.put("minAvailableYear", minAvailableYear);
@@ -178,6 +204,14 @@ public class NetworkGraphService {
             System.err.println("NetworkGraphService: cleaned_nodes.csv not found: " + nodesPath.toAbsolutePath());
             return;
         }
+        Map<String, Double> scholarScoreById = scholarService.getAllScholars().stream()
+                .filter(scholar -> scholar.getId() != null && !scholar.getId().isBlank())
+                .collect(Collectors.toMap(
+                        Scholar::getId,
+                        Scholar::getTotalScore,
+                        (left, right) -> left
+                ));
+
         try (BufferedReader reader = Files.newBufferedReader(nodesPath, StandardCharsets.UTF_8)) {
             String header = reader.readLine();
             if (header == null) {
@@ -190,14 +224,17 @@ public class NetworkGraphService {
                 if (cols.size() < 11) {
                     continue;
                 }
+                String nodeId = cols.get(0);
+                double csvScore = parseDouble(cols.get(10));
+                double resolvedScore = scholarScoreById.getOrDefault(nodeId, csvScore);
                 NodeRecord node = new NodeRecord(
-                        cols.get(0),
+                        nodeId,
                         cols.get(1),
                         cols.get(2),
                         parseInt(cols.get(3)),
                         parseInt(cols.get(4)),
                         parseInt(cols.get(5)),
-                        parseDouble(cols.get(10)),
+                        resolvedScore,
                         parseInt(cols.get(8)),
                         rank
                 );

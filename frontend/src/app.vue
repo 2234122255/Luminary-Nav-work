@@ -47,6 +47,7 @@
           <router-link to="/" class="nav-link">首页</router-link>
           <router-link to="/rankings" class="nav-link">榜单</router-link>
           <router-link to="/network" class="nav-link">合著网络</router-link>
+          <router-link v-if="isAdmin" to="/admin" class="nav-link">后台管理</router-link>
         </nav>
 
         <div class="search-section">
@@ -86,14 +87,14 @@
             <span class="icon">🤖</span>
           </div>
           <router-link
-            v-if="!isUserLoggedIn && $route.path !== '/login' && $route.path !== '/register'"
+            v-if="!isLoggedIn && $route.path !== '/login' && $route.path !== '/register'"
             to="/login"
             class="auth-btn"
           >
             立即登录
           </router-link>
           <div
-            v-else-if="isUserLoggedIn && $route.path !== '/login' && $route.path !== '/register'"
+            v-else-if="isLoggedIn && $route.path !== '/login' && $route.path !== '/register'"
             class="user-menu-wrap"
             ref="userMenuWrap"
           >
@@ -101,6 +102,7 @@
               U
             </div>
             <div v-if="userMenuOpen" class="user-menu" @click.stop>
+              <button v-if="isAdmin" class="user-menu-item" type="button" @click="goToAdmin">后台管理</button>
               <button class="user-menu-item" type="button" @click="logout">退出登录</button>
             </div>
           </div>
@@ -233,8 +235,11 @@ export default {
     if (this._docClickListener) document.removeEventListener('click', this._docClickListener)
   },
   computed: {
-    isUserLoggedIn() {
-      return this.auth?.role === 'user'
+    isLoggedIn() {
+      return this.auth?.role === 'user' || this.auth?.role === 'admin'
+    },
+    isAdmin() {
+      return this.auth?.role === 'admin'
     }
   },
   methods: {
@@ -255,6 +260,10 @@ export default {
       window.dispatchEvent(new Event('luminary-auth-change'))
       this.userMenuOpen = false
       if (this.$route.path !== '/') this.$router.push('/')
+    },
+    goToAdmin() {
+      this.userMenuOpen = false
+      if (this.$route.path !== '/admin') this.$router.push('/admin')
     },
     toggleAiChat() {
       this.isAiChatVisible = !this.isAiChatVisible;

@@ -132,6 +132,20 @@
     </div>
   </Transition>
 
+  <!-- Login required dialog (frontend-only auth gate) -->
+  <Transition name="fade-scale">
+    <div v-if="authDialogOpen" class="auth-overlay" @click.self="authDialogOpen = false">
+      <div class="auth-dialog glass-morphism">
+        <div class="auth-title">无法下载</div>
+        <div class="auth-desc">未登录，需先登录后才能下载。</div>
+        <div class="auth-actions">
+          <button class="auth-btn secondary" type="button" @click="authDialogOpen = false">取消</button>
+          <button class="auth-btn primary" type="button" @click="goToLogin">去登录</button>
+        </div>
+      </div>
+    </div>
+  </Transition>
+
   <!-- 隐藏画板，用于导出 -->
   <div ref="posterContainer" style="position: fixed; left: -9999px; top: 0; z-index: -1;"></div>
 </template>
@@ -159,6 +173,7 @@ let chartInstance = null
 const posterContainer = ref(null)
 let posterChartInstance = null
 const dropdownOpen = ref(false)
+const authDialogOpen = ref(false)
 
 const isRouteMode = computed(() => props.visible === undefined)
 const isVisible = computed(() => (props.visible === undefined ? true : props.visible))
@@ -302,6 +317,28 @@ const onMaskClick = () => {
   if (!isRouteMode.value) close()
 }
 
+const isLoggedIn = () => {
+  try {
+    const auth = JSON.parse(localStorage.getItem('luminaryAuth') || 'null')
+    return !!auth && (auth.role === 'user' || auth.role === 'admin')
+  } catch {
+    localStorage.removeItem('luminaryAuth')
+    return false
+  }
+}
+
+const requireLogin = () => {
+  if (isLoggedIn()) return true
+  authDialogOpen.value = true
+  return false
+}
+
+const goToLogin = () => {
+  authDialogOpen.value = false
+  dropdownOpen.value = false
+  router.push('/login')
+}
+
 // ================= 导出画报功能 =================
 const buildPosterHTML = () => {
   const scholar = currentScholar.value
@@ -373,34 +410,54 @@ const renderPosterRadar = () => {
   return new Promise((resolve) => {
     const container = posterContainer.value
     if (!container) return resolve()
+
     const radarDiv = container.querySelector('#poster-radar')
     if (!radarDiv) return resolve()
+
     if (posterChartInstance) posterChartInstance.dispose()
     posterChartInstance = echarts.init(radarDiv)
+
     const radarValues = normalizeRadar()
-    const option = {
+    posterChartInstance.setOption({
+      animation: false,
       backgroundColor: 'transparent',
       radar: {
+        center: ['50%', '54%'],
+        radius: '65%',
         indicator: [
-          { name: '影响力', max: 1 }, { name: '活跃度', max: 1 }, { name: '引用量', max: 1 },
-          { name: '合作频率', max: 1 }, { name: '创新性', max: 1 }, { name: '产出比', max: 1 }
+          { name: '影响力', max: 1 },
+          { name: '活跃度', max: 1 },
+          { name: '引用量', max: 1 },
+          { name: '合作频率', max: 1 },
+          { name: '创新性', max: 1 },
+          { name: '产出比', max: 1 }
         ],
         shape: 'circle',
         splitNumber: 4,
         axisName: { color: '#ddd' },
-        splitLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }
+        splitLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
+        axisLine: { lineStyle: { color: 'rgba(255,255,255,0.45)' } }
       },
       series: [{
         type: 'radar',
-        data: [{ value: radarValues, areaStyle: { color: 'rgba(139,92,246,0.3)' }, lineStyle: { color: '#8b5cf6', width: 2 }, itemStyle: { color: '#8b5cf6' } }]
+        symbol: 'circle',
+        symbolSize: 6,
+        data: [{
+          value: radarValues,
+          areaStyle: { color: 'rgba(139,92,246,0.3)' },
+          lineStyle: { color: '#8b5cf6', width: 2 },
+          itemStyle: { color: '#8b5cf6' }
+        }]
       }]
-    }
-    posterChartInstance.setOption(option)
-    setTimeout(resolve, 300)
+    }, true)
+
+    posterChartInstance.resize()
+    requestAnimationFrame(() => requestAnimationFrame(resolve))
   })
 }
 
 const exportAsImage = async () => {
+  if (!requireLogin()) return
   dropdownOpen.value = false
   const container = posterContainer.value
   if (!container) return
@@ -423,6 +480,7 @@ const exportAsImage = async () => {
 }
 
 const exportAsPDF = async () => {
+  if (!requireLogin()) return
   dropdownOpen.value = false
   const container = posterContainer.value
   if (!container) return
@@ -827,6 +885,75 @@ onBeforeUnmount(() => {
 .fade-scale-leave-to {
   opacity: 0;
   transform: scale(0.9);
+}
+
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.auth-dialog {
+  width: min(420px, 100%);
+  padding: 18px 18px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(100, 150, 255, 0.22);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(18px);
+  color: #fff;
+}
+
+.auth-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.auth-desc {
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.auth-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.auth-btn {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(100, 150, 255, 0.22);
+  cursor: pointer;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.auth-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(102, 126, 234, 0.55);
+}
+
+.auth-btn.primary {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.7), rgba(118, 75, 162, 0.62));
+  box-shadow: 0 10px 22px rgba(102, 126, 234, 0.22);
+  border-color: rgba(102, 126, 234, 0.5);
+}
+
+.auth-btn.primary:hover {
+  box-shadow: 0 14px 28px rgba(102, 126, 234, 0.32);
 }
 
 /* 响应式 */
