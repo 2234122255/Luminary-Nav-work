@@ -1,5 +1,6 @@
 package com.example.coauthoranalysis.service;
 
+import com.example.coauthoranalysis.model.Scholar;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 @Service
 public class NetworkGraphService {
     private static final int BASE_POOL_LIMIT = 600;
+    private final ScholarService scholarService;
 
     private final List<NodeRecord> allNodes = new ArrayList<>();
     private final List<EdgeRecord> allEdges = new ArrayList<>();
@@ -32,6 +34,10 @@ public class NetworkGraphService {
     private boolean yearFilterSupported = false;
     private Integer minAvailableYear = null;
     private Integer maxAvailableYear = null;
+
+    public NetworkGraphService(ScholarService scholarService) {
+        this.scholarService = scholarService;
+    }
 
     @PostConstruct
     public void init() {
@@ -198,6 +204,14 @@ public class NetworkGraphService {
             System.err.println("NetworkGraphService: cleaned_nodes.csv not found: " + nodesPath.toAbsolutePath());
             return;
         }
+        Map<String, Double> scholarScoreById = scholarService.getAllScholars().stream()
+                .filter(scholar -> scholar.getId() != null && !scholar.getId().isBlank())
+                .collect(Collectors.toMap(
+                        Scholar::getId,
+                        Scholar::getTotalScore,
+                        (left, right) -> left
+                ));
+
         try (BufferedReader reader = Files.newBufferedReader(nodesPath, StandardCharsets.UTF_8)) {
             String header = reader.readLine();
             if (header == null) {
@@ -210,14 +224,17 @@ public class NetworkGraphService {
                 if (cols.size() < 11) {
                     continue;
                 }
+                String nodeId = cols.get(0);
+                double csvScore = parseDouble(cols.get(10));
+                double resolvedScore = scholarScoreById.getOrDefault(nodeId, csvScore);
                 NodeRecord node = new NodeRecord(
-                        cols.get(0),
+                        nodeId,
                         cols.get(1),
                         cols.get(2),
                         parseInt(cols.get(3)),
                         parseInt(cols.get(4)),
                         parseInt(cols.get(5)),
-                        parseDouble(cols.get(10)),
+                        resolvedScore,
                         parseInt(cols.get(8)),
                         rank
                 );
